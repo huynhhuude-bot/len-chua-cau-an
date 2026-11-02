@@ -571,65 +571,256 @@
     });
     addMesh(hall, new Plane(5.2, 1.45), new MatB({ map: createSignTex('ĐẠI HÙNG BẢO ĐIỆN', 'CHÍNH ĐIỆN') }), 0, 6.55, 5.65);
 
-    // Bảo Tòa & Tôn Tượng "TỰ TẠI PHẬT" trong Chánh Điện (dáng ngồi Tự Tại ung dung, trang nghiêm)
-    const statue = new Grp(); statue.position.set(0, 0.9, -1.8); hall.add(statue);
-    // Bức hoành phi thờ "TỰ TẠI PHẬT" phía trên khám thờ trong Chánh Điện
-    addMesh(statue, new Plane(3.8, 1.05), new MatB({ map: createSignTex('TỰ TẠI PHẬT', 'QUÁN TÂM TỰ TẠI') }), 0, 5.55, 0.2);
-    // Bệ thờ gỗ son thếp vàng & Tảng Bảo Thạch Tự Tại
-    addMesh(statue, new Box(4.8, 1.35, 3.6), MATS.woodRed, 0, 0.68, 0, true);
-    addMesh(statue, new Box(4.95, 0.14, 3.75), MATS.gold, 0, 1.36, 0);
-    // Đài sen báu 2 tầng (cánh sen hồng & kim liên)
-    addMesh(statue, new Cyl(1.68, 1.35, 0.58, 18), MATS.lotusPink, 0, 1.68, 0, true);
-    for (let p = 0; p < 16; p++) {
-      const a = (p / 16) * Math.PI * 2;
-      const pet = addMesh(statue, new Cone(0.36, 0.75, 5), p % 2 === 0 ? MATS.lotusPink : MATS.gold, Math.cos(a) * 1.54, 1.78, Math.sin(a) * 1.54);
-      pet.rotation.set(Math.sin(a) * 0.38, 0, -Math.cos(a) * 0.38);
+    // Bảo Tòa & Tôn Tượng "TỰ TẠI PHẬT" Điêu Khắc Chi Tiết Chân Thật trong Chánh Điện
+    function createHaloCanvasTex() {
+      const c = document.createElement('canvas'); c.width = c.height = 512;
+      const ctx = c.getContext('2d'), cx = 256, cy = 256;
+      const g = ctx.createRadialGradient(cx, cy, 40, cx, cy, 250);
+      g.addColorStop(0, 'rgba(255,248,210,0.92)');
+      g.addColorStop(0.55, 'rgba(255,215,105,0.58)');
+      g.addColorStop(0.85, 'rgba(245,166,35,0.28)');
+      g.addColorStop(1, 'rgba(245,166,35,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, 512, 512);
+      ctx.strokeStyle = 'rgba(255,238,165,0.75)';
+      for (let i = 0; i < 36; i++) {
+        const a = (i / 36) * Math.PI * 2;
+        ctx.lineWidth = i % 2 === 0 ? 3 : 1.5;
+        ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * 75, cy + Math.sin(a) * 75);
+        ctx.lineTo(cx + Math.cos(a) * 235, cy + Math.sin(a) * 235); ctx.stroke();
+      }
+      [115, 175, 222].forEach((r, idx) => {
+        ctx.lineWidth = idx === 1 ? 5 : 2.5;
+        ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke();
+      });
+      return regTex(new THREE.CanvasTexture(c));
     }
-    // Đóa sen nhỏ phụ nâng bàn chân trái buông thư (đặc trưng thế ngồi Tự Tại)
-    addMesh(statue, new Cyl(0.42, 0.3, 0.25, 12), MATS.lotusPink, -0.55, 1.38, 1.38);
-    // Tư thế chân Tự Tại: Chân trái xếp/buông nhẹ xuống đài sen phụ, Chân phải co gối Tự Tại
-    const leftThigh = addMesh(statue, new Cyl(0.24, 0.22, 1.05, 12), MATS.buddhaGold, -0.42, 2.02, 0.52);
-    leftThigh.rotation.set(0.65, 0.25, 0.35);
-    const leftCalf = addMesh(statue, new Cyl(0.19, 0.17, 0.85, 12), MATS.buddhaGold, -0.54, 1.68, 1.08);
-    leftCalf.rotation.set(0.28, 0, 0.08);
-    // Chân phải chống gối Tự Tại (Royal Ease)
-    const rightKnee = addMesh(statue, new Cyl(0.26, 0.23, 1.05, 12), MATS.buddhaGold, 0.52, 2.48, 0.55);
-    rightKnee.rotation.set(-0.42, -0.2, -0.28);
-    addMesh(statue, new Sph(0.27, 12, 12), MATS.buddhaGold, 0.56, 2.86, 0.72);
-    // Thân mình Tự Tại Phật & Dải thiên y rủ mềm
-    addMesh(statue, new Cyl(1.18, 1.38, 0.48, 14), MATS.buddhaGold, 0, 2.08, 0);
-    const bodyCore = addMesh(statue, new Cyl(0.66, 0.96, 1.68, 14), MATS.buddhaGold, 0, 3.12, -0.05, true);
-    bodyCore.rotation.z = -0.04;
-    const sh = addMesh(statue, new Sph(0.86, 14, 10), MATS.buddhaGold, 0, 3.84, -0.05); sh.scale.set(1.28, 0.55, 0.78);
-    // Dải lụa thiên y vắt qua vai và rủ xuống đài sen
-    const sash = addMesh(statue, new Box(0.28, 1.45, 0.12), MATS.gold, 0, 1.75, 1.28); sash.rotation.x = -0.28;
-    // Tay phải đặt ung dung lên đầu gối phải (thủ ấn Tự Tại), tay trái chống nhẹ lên đài sen
-    const rArm = addMesh(statue, new Cyl(0.17, 0.15, 1.18, 10), MATS.buddhaGold, 0.62, 3.22, 0.42);
-    rArm.rotation.set(0.78, 0, -0.22);
-    addMesh(statue, new Sph(0.18, 10, 10), MATS.buddhaGold, 0.64, 2.88, 0.92);
-    const lArm = addMesh(statue, new Cyl(0.17, 0.15, 1.25, 10), MATS.buddhaGold, -0.78, 2.82, 0.12);
-    lArm.rotation.set(0.15, 0, 0.26);
-    // Diện tượng Tự Tại Phật từ hòa, Bạch hào giữa trán & Bảo quan Hoa Sen
-    addMesh(statue, new Sph(0.58, 18, 18), MATS.buddhaGold, 0, 4.56, 0);
-    // Đôi tai dài phúc tướng
-    [-0.55, 0.55].forEach(ex => {
-      const ear = addMesh(statue, new Sph(0.14, 10, 10), MATS.buddhaGold, ex, 4.46, 0.05);
-      ear.scale.set(0.65, 1.85, 0.75);
+
+    const statue = new Grp(); statue.position.set(0, 0.9, -1.8); hall.add(statue);
+    // Đèn rọi diện tượng & kim thân giúp nổi khối 3D chân thật
+    const statueLight = new THREE.PointLight(0xffe099, 2.1, 10);
+    statueLight.position.set(0, 4.9, 2.2); statue.add(statueLight);
+
+    // Bức hoành phi thờ "TỰ TẠI PHẬT" phía trên khám thờ
+    addMesh(statue, new Plane(3.8, 1.05), new MatB({ map: createSignTex('TỰ TẠI PHẬT', 'QUÁN TÂM TỰ TẠI') }), 0, 5.85, 0.2);
+
+    // Vật liệu điêu khắc chuyên biệt: Kim thân thếp vàng bóng mịn, Y phục gấm vàng, Tóc đen ánh đồng, Môi chu sa trầm
+    const skinGoldMat = new MatS({ color: 0xffd87a, emissive: 0x4d2e05, emissiveIntensity: 0.32, metalness: 0.58, roughness: 0.24 });
+    const robeBroMat = new MatS({ color: 0xf3b63f, emissive: 0x422104, emissiveIntensity: 0.28, metalness: 0.68, roughness: 0.3 });
+    const hairBronzeMat = new MatS({ color: 0x231b16, metalness: 0.35, roughness: 0.55 });
+    const lipMat = new MatS({ color: 0xc85a3c, roughness: 0.4 });
+    const darkEyeMat = new MatB({ color: 0x2b180e });
+    const pearlMat = new MatB({ color: 0xfffdf2 });
+
+    // 1. Bệ thờ gỗ chạm son thếp vàng & Tảng Bảo Thạch Thủy Nguyệt
+    addMesh(statue, new Box(4.9, 1.32, 3.65), MATS.woodRed, 0, 0.66, 0, true);
+    addMesh(statue, new Box(5.08, 0.14, 3.82), MATS.gold, 0, 1.34, 0);
+    for (let rk = 0; rk < 7; rk++) {
+      const rx = (rk - 3) * 0.52, rz = (rk % 2 === 0 ? 0.15 : -0.15);
+      const rock = addMesh(statue, new THREE.DodecahedronGeometry(0.52 + (rk % 3) * 0.12, 1), MATS.stone, rx, 1.48, rz);
+      rock.scale.set(1.25, 0.55, 1.15);
+    }
+
+    // 2. Đài Sen Báu 3 Tầng (36 cánh sen uốn cong 3D + Gương sen & Nhị sen vàng)
+    const lotusBase = new Grp(); lotusBase.position.set(0, 1.72, 0); statue.add(lotusBase);
+    addMesh(lotusBase, new Cyl(1.52, 1.18, 0.48, 24), MATS.gold, 0, 0, 0, true);
+    addMesh(lotusBase, new Cyl(1.42, 1.42, 0.12, 24), MATS.lotusPink, 0, 0.25, 0);
+    for (let st = 0; st < 24; st++) {
+      const sa = (st / 24) * Math.PI * 2;
+      addMesh(lotusBase, new Sph(0.045, 8, 8), MATS.gold, Math.cos(sa) * 1.36, 0.31, Math.sin(sa) * 1.36);
+    }
+    // 3 lớp cánh sen nở (lớp trong, lớp giữa, lớp ngoài úp)
+    [
+      { cnt: 12, r: 1.38, y: 0.18, tilt: 0.32, sy: 0.72, mat: MATS.lotusPink },
+      { cnt: 12, r: 1.54, y: 0.06, tilt: 0.56, sy: 0.78, mat: robeBroMat },
+      { cnt: 12, r: 1.46, y: -0.14, tilt: 2.35, sy: 0.65, mat: MATS.lotusPink }
+    ].forEach((layer, li) => {
+      for (let p = 0; p < layer.cnt; p++) {
+        const a = ((p + li * 0.5) / layer.cnt) * Math.PI * 2;
+        const pg = new Grp();
+        pg.position.set(Math.cos(a) * layer.r, layer.y, Math.sin(a) * layer.r);
+        pg.rotation.y = -a + Math.PI / 2;
+        pg.rotation.x = layer.tilt;
+        const petalMesh = addMesh(pg, new Sph(0.34, 12, 12), layer.mat, 0, 0.22, 0, true);
+        petalMesh.scale.set(0.88, layer.sy * 1.85, 0.26);
+        lotusBase.add(pg);
+      }
     });
-    // Bạch hào ngọc sáng giữa trán
-    addMesh(statue, new Sph(0.065, 10, 10), new MatB({ color: 0xfff9db }), 0, 4.68, 0.55);
-    // Nhục kế & Mão báu Kim Liên trên đỉnh đầu
-    addMesh(statue, new Sph(0.28, 14, 14), MATS.buddhaGold, 0, 5.12, -0.02);
-    addMesh(statue, new Cyl(0.36, 0.44, 0.28, 12), MATS.gold, 0, 4.98, 0.08);
-    // Nguyệt Luân Tự Tại (vầng trăng tròn lớn phía sau) & Hào quang kép
-    addMesh(statue, new THREE.CircleGeometry(2.15, 36), new MatB({ color: 0xfff1b8, side: THREE.DoubleSide, transparent: true, opacity: 0.22 }), 0, 3.75, -0.88);
-    const buddhaHalo = addMesh(statue, new Ring(1.38, 1.95, 36), new MatB({ color: 0xffe28a, side: THREE.DoubleSide, transparent: true, opacity: 0.82 }), 0, 3.85, -0.75);
-    const buddhaHaloOuter = addMesh(statue, new Ring(2.0, 2.55, 36), new MatB({ color: 0xffb74d, side: THREE.DoubleSide, transparent: true, opacity: 0.32 }), 0, 3.85, -0.82);
+
+    // Đóa sen báu phụ nâng bàn chân trái (tư thế Thủy Nguyệt Tự Tại)
+    const subLotus = new Grp(); subLotus.position.set(-0.56, 1.32, 1.42); statue.add(subLotus);
+    addMesh(subLotus, new Cyl(0.38, 0.24, 0.22, 16), MATS.lotusPink, 0, 0, 0);
+    for (let sp = 0; sp < 8; sp++) {
+      const sa = (sp / 8) * Math.PI * 2;
+      const spet = addMesh(subLotus, new Sph(0.16, 10, 10), sp % 2 === 0 ? MATS.lotusPink : MATS.gold, Math.cos(sa) * 0.34, 0.05, Math.sin(sa) * 0.34);
+      spet.scale.set(0.7, 1.4, 0.35);
+    }
+
+    // 3. Thân Tượng Điêu Khắc Mềm Mại (LatheGeometry tạo dáng eo, ngực & vạt y xếp nếp)
+    const torsoPts = [
+      new THREE.Vector2(0.01, 0),
+      new THREE.Vector2(1.22, 0.05),
+      new THREE.Vector2(1.05, 0.35),
+      new THREE.Vector2(0.62, 0.72),
+      new THREE.Vector2(0.54, 1.12),
+      new THREE.Vector2(0.68, 1.55),
+      new THREE.Vector2(0.58, 1.82),
+      new THREE.Vector2(0.24, 1.96)
+    ];
+    const torsoGeo = new THREE.LatheGeometry(torsoPts, 28);
+    const torsoMesh = addMesh(statue, torsoGeo, robeBroMat, 0, 1.95, -0.05, true);
+    torsoMesh.scale.set(1.04, 1, 0.78);
+    // Vùng ngực lộ kim thân và vòng Chuỗi Anh Lạc Bảo Châu trước ngực
+    const chestSkin = addMesh(statue, new Sph(0.42, 20, 16), skinGoldMat, 0, 3.45, 0.16);
+    chestSkin.scale.set(1.15, 0.95, 0.65);
+    const necklace = addMesh(statue, new Torus(0.34, 0.025, 10, 28, Math.PI * 1.15), MATS.gold, 0, 3.68, 0.32);
+    necklace.rotation.set(1.15, 0, 2.98);
+    for (let nb = -2; nb <= 2; nb++) {
+      addMesh(statue, new Sph(nb === 0 ? 0.065 : 0.042, 10, 10), nb === 0 ? pearlMat : MATS.gold, nb * 0.11, 3.42 - Math.abs(nb) * 0.02, 0.44);
+    }
+    // Bờ vai tròn đầy mềm mại
+    const sh = addMesh(statue, new Sph(0.76, 24, 16), robeBroMat, 0, 3.74, -0.04, true);
+    sh.scale.set(1.24, 0.52, 0.72);
+
+    // 4. Chân Phải Chống Gối Tự Tại & Chân Trái Buông Thư (Kèm Bàn Chân & 5 Ngón Chân Điêu Khắc)
+    // Đùi & bắp chân trái
+    const lThigh = addMesh(statue, new Cyl(0.26, 0.22, 1.08, 16), robeBroMat, -0.42, 2.08, 0.48, true);
+    lThigh.rotation.set(0.68, 0.22, 0.32);
+    const lCalf = addMesh(statue, new Cyl(0.2, 0.15, 0.88, 16), robeBroMat, -0.55, 1.72, 1.05, true);
+    lCalf.rotation.set(0.38, 0, 0.08);
+    // Bàn chân trái & 5 ngón chân trên đài sen phụ
+    const lFoot = new Grp(); lFoot.position.set(-0.56, 1.48, 1.38); lFoot.rotation.set(0.1, 0.15, 0); statue.add(lFoot);
+    addMesh(lFoot, new Sph(0.13, 14, 12), skinGoldMat, 0, 0, 0).scale.set(0.85, 0.55, 1.45);
+    for (let t = 0; t < 5; t++) addMesh(lFoot, new Sph(0.026 - t * 0.002, 8, 8), skinGoldMat, -0.06 + t * 0.03, -0.01, 0.18 - t * 0.01);
+
+    // Chân phải chống gối Tự Tại (Royal Ease)
+    const rThigh = addMesh(statue, new Cyl(0.28, 0.25, 1.05, 16), robeBroMat, 0.46, 2.38, 0.42, true);
+    rThigh.rotation.set(-0.55, -0.25, -0.32);
+    addMesh(statue, new Sph(0.26, 16, 16), robeBroMat, 0.56, 2.82, 0.72, true);
+    const rCalf = addMesh(statue, new Cyl(0.21, 0.16, 0.92, 16), robeBroMat, 0.48, 2.36, 0.82, true);
+    rCalf.rotation.set(0.18, 0, 0.16);
+    const rFoot = new Grp(); rFoot.position.set(0.36, 1.98, 0.92); rFoot.rotation.set(0, -0.35, 0); statue.add(rFoot);
+    addMesh(rFoot, new Sph(0.13, 14, 12), skinGoldMat, 0, 0, 0).scale.set(0.85, 0.55, 1.4);
+    for (let t = 0; t < 5; t++) addMesh(rFoot, new Sph(0.025 - t * 0.002, 8, 8), skinGoldMat, -0.06 + t * 0.03, -0.01, 0.17 - t * 0.01);
+
+    // 5. Đôi Tay Điêu Khắc Mềm Mại & Bàn Tay 5 Ngón Thon Dài Bắt Ấn Tự Tại
+    // Tay phải tựa nhẹ lên đầu gối phải
+    const rUpperArm = addMesh(statue, new Cyl(0.18, 0.15, 0.88, 16), robeBroMat, 0.68, 3.38, 0.16, true);
+    rUpperArm.rotation.set(0.45, 0, -0.32);
+    const rForeArm = addMesh(statue, new Cyl(0.14, 0.11, 0.82, 16), skinGoldMat, 0.68, 2.98, 0.58, true);
+    rForeArm.rotation.set(1.12, -0.15, 0.12);
+    // Vòng ngọc cổ tay phải & Bàn tay phải 5 ngón buông thư
+    const rWrist = addMesh(statue, new Torus(0.115, 0.022, 8, 18), MATS.gold, 0.62, 2.86, 0.88);
+    rWrist.rotation.x = 1.1;
+    const rHand = new Grp(); rHand.position.set(0.6, 2.82, 0.98); rHand.rotation.set(0.55, -0.1, -0.15); statue.add(rHand);
+    addMesh(rHand, new Sph(0.1, 12, 12), skinGoldMat, 0, 0, 0).scale.set(0.95, 0.55, 1.25);
+    for (let f = 0; f < 5; f++) {
+      const fa = (f - 2) * 0.16;
+      const fg = addMesh(rHand, new Cyl(0.018, 0.012, f === 0 ? 0.11 : 0.16, 8), skinGoldMat, fa * 0.45, -0.03, 0.12);
+      fg.rotation.set(1.15 + f * 0.06, 0, -fa * 0.4);
+    }
+
+    // Tay trái chống nhẹ lên đài sen bên trái
+    const lUpperArm = addMesh(statue, new Cyl(0.18, 0.15, 0.92, 16), robeBroMat, -0.68, 3.32, 0.05, true);
+    lUpperArm.rotation.set(0.12, 0, 0.28);
+    const lForeArm = addMesh(statue, new Cyl(0.14, 0.11, 0.88, 16), skinGoldMat, -0.82, 2.58, 0.18, true);
+    lForeArm.rotation.set(0.18, 0, 0.16);
+    addMesh(statue, new Sph(0.12, 12, 12), skinGoldMat, -0.88, 2.12, 0.28).scale.set(1.1, 0.5, 1.2);
+
+    // 6. Dải Lụa Thiên Y Uốn Lượn 3D (TubeGeometry theo đường cong CatmullRomCurve3)
+    [1, -1].forEach(side => {
+      const curve = new THREE.CatmullRomCurve3([
+        new V3(side * 0.45, 3.88, -0.15),
+        new V3(side * 0.88, 3.45, 0.25),
+        new V3(side * 0.96, 2.65, 0.65),
+        new V3(side * 0.72, 1.85, 1.18),
+        new V3(side * 0.48, 1.32, 1.48)
+      ]);
+      addMesh(statue, new THREE.TubeGeometry(curve, 24, 0.065, 10, false), MATS.gold, 0, 0, 0, true);
+    });
+
+    // 7. Diện Tượng (Khuôn Mặt Tự Tại Phật) Có Đầy Đủ Ngũ Quan Từ Bi & Mão Báu Kim Liên
+    // Cổ cao 3 ngấn (Tam đạo)
+    addMesh(statue, new Cyl(0.24, 0.28, 0.42, 20), skinGoldMat, 0, 4.02, 0.04);
+    [3.92, 4.0, 4.08].forEach(ny => {
+      const nr = addMesh(statue, new Torus(0.255, 0.012, 8, 24, Math.PI), MATS.gold, 0, ny, 0.05);
+      nr.rotation.x = Math.PI / 2;
+    });
+
+    const headGroup = new Grp();
+    headGroup.position.set(0, 4.58, 0.06);
+    headGroup.rotation.x = 0.08; // Cúi nhẹ từ bi nhìn xuống chúng sinh
+    statue.add(headGroup);
+
+    // Khuôn mặt bầu bĩnh phúc hậu & cằm tròn đầy
+    const faceSphere = addMesh(headGroup, new Sph(0.52, 32, 32), skinGoldMat, 0, 0, 0, true);
+    faceSphere.scale.set(0.88, 1.06, 0.94);
+    const chin = addMesh(headGroup, new Sph(0.26, 20, 20), skinGoldMat, 0, -0.32, 0.18);
+    chin.scale.set(1.05, 0.75, 0.88);
+
+    // Đôi mày lá liễu cong thanh thoát
+    [-1, 1].forEach(side => {
+      const brow = addMesh(headGroup, new Torus(0.145, 0.014, 8, 20, Math.PI * 0.68), hairBronzeMat, side * 0.17, 0.13, 0.42);
+      brow.rotation.set(0.15, side * 0.25, side === -1 ? 0.38 : 0.48);
+    });
+
+    // Đôi mắt từ bi khép hờ (Thùy liêm mục - nhìn xuống an lành)
+    [-1, 1].forEach(side => {
+      const eyelid = addMesh(headGroup, new Sph(0.095, 16, 12), skinGoldMat, side * 0.17, 0.04, 0.43);
+      eyelid.scale.set(1.25, 0.55, 0.45);
+      const eyeLine = addMesh(headGroup, new Torus(0.088, 0.009, 6, 16, Math.PI * 0.75), darkEyeMat, side * 0.17, 0.025, 0.455);
+      eyeLine.rotation.set(0.25, side * 0.2, Math.PI * 1.12);
+    });
+
+    // Sống mũi dọc dừa thanh tú & chóp mũi
+    const noseBridge = addMesh(headGroup, new Cyl(0.024, 0.052, 0.24, 14), skinGoldMat, 0, -0.04, 0.47);
+    noseBridge.rotation.x = -0.22;
+    addMesh(headGroup, new Sph(0.052, 14, 14), skinGoldMat, 0, -0.14, 0.505).scale.set(1.15, 0.85, 0.95);
+    [-0.042, 0.042].forEach(nx => addMesh(headGroup, new Sph(0.028, 10, 10), skinGoldMat, nx, -0.15, 0.485));
+
+    // Đôi môi mỉm cười hàm tiếu từ hòa
+    const upperLip = addMesh(headGroup, new Torus(0.085, 0.018, 10, 20, Math.PI * 0.78), lipMat, 0, -0.22, 0.435);
+    upperLip.rotation.set(0.35, 0, Math.PI * 1.11);
+    const lowerLip = addMesh(headGroup, new Torus(0.075, 0.02, 10, 20, Math.PI * 0.72), lipMat, 0, -0.255, 0.43);
+    lowerLip.rotation.set(-0.2, 0, Math.PI * 1.14);
+
+    // Bạch hào tướng quang (viên ngọc sáng giữa trán)
+    addMesh(headGroup, new Sph(0.038, 14, 14), pearlMat, 0, 0.22, 0.465);
+
+    // Đôi tai dài phúc hậu (vành tai + dái tai tròn đầy rủ xuống + hoa tai vàng)
+    [-1, 1].forEach(side => {
+      const earG = new Grp(); earG.position.set(side * 0.46, -0.04, 0.02); headGroup.add(earG);
+      addMesh(earG, new Sph(0.11, 14, 14), skinGoldMat, 0, 0.08, 0).scale.set(0.55, 1.55, 0.85);
+      addMesh(earG, new Sph(0.085, 14, 14), skinGoldMat, side * 0.02, -0.18, 0.02).scale.set(0.7, 1.45, 0.8);
+      addMesh(earG, new Torus(0.055, 0.015, 8, 16), MATS.gold, side * 0.03, -0.32, 0.02);
+    });
+
+    // Tóc búi cao & Mão Báu Kim Liên (Bảo Quan chạm Hóa Phật)
+    const hairCap = addMesh(headGroup, new Sph(0.535, 28, 20, 0, Math.PI * 2, 0, Math.PI * 0.56), hairBronzeMat, 0, 0.04, -0.03);
+    hairCap.scale.set(0.9, 1.06, 0.96);
+    addMesh(headGroup, new Cyl(0.22, 0.28, 0.34, 18), hairBronzeMat, 0, 0.62, -0.05);
+    addMesh(headGroup, new Sph(0.22, 16, 16), hairBronzeMat, 0, 0.78, -0.05);
+    // Vương miện / Bảo quan ngũ diệp thếp vàng
+    addMesh(headGroup, new Cyl(0.45, 0.42, 0.22, 20, 1, true), MATS.gold, 0, 0.38, 0.02);
+    for (let cp = -2; cp <= 2; cp++) {
+      const ca = cp * 0.42;
+      const leaf = addMesh(headGroup, new Cone(cp === 0 ? 0.16 : 0.11, cp === 0 ? 0.46 : 0.34, 5), MATS.gold, Math.sin(ca) * 0.44, 0.58 + (cp === 0 ? 0.08 : 0), Math.cos(ca) * 0.44);
+      leaf.rotation.set(0.18, ca, 0);
+    }
+    // Ngọc sáng & Hóa Phật nhỏ chính giữa Bảo Quan
+    addMesh(headGroup, new Sph(0.065, 12, 12), MATS.lotusPink, 0, 0.52, 0.48);
+    addMesh(headGroup, new Sph(0.04, 10, 10), pearlMat, 0, 0.62, 0.48);
+
+    // 8. Nguyệt Luân Tự Tại Chạm Hoa Văn & Hào Quang Kép Phía Sau
+    const haloTexMat = new MatB({ map: createHaloCanvasTex(), side: THREE.DoubleSide, transparent: true, depthWrite: false });
+    addMesh(statue, new Plane(4.6, 4.6), haloTexMat, 0, 3.85, -0.92);
+    const buddhaHalo = addMesh(statue, new Ring(1.38, 1.95, 48), new MatB({ color: 0xffe28a, side: THREE.DoubleSide, transparent: true, opacity: 0.85 }), 0, 3.88, -0.78);
+    const buddhaHaloOuter = addMesh(statue, new Ring(2.02, 2.62, 48), new MatB({ color: 0xffb74d, side: THREE.DoubleSide, transparent: true, opacity: 0.36 }), 0, 3.88, -0.85);
+
     // Đôi Bình Ngọc Cắm Hoa Sen Vàng & Đèn Lưu Ly chầu hai bên Bảo Tòa Tự Tại Phật
-    [-1.85, 1.85].forEach(vx => {
-      addMesh(statue, new Cyl(0.18, 0.24, 0.65, 10), MATS.stoneLt, vx, 1.72, 0.95);
-      addMesh(statue, new Cone(0.22, 0.38, 7), MATS.gold, vx, 2.22, 0.95);
-      addMesh(statue, new Sph(0.14, 10, 10), MATS.lanternRed, vx * 0.72, 1.58, 1.25);
+    [-1.95, 1.95].forEach(vx => {
+      addMesh(statue, new Cyl(0.18, 0.24, 0.68, 14), MATS.stoneLt, vx, 1.72, 0.95);
+      addMesh(statue, new Cone(0.24, 0.42, 8), MATS.gold, vx, 2.24, 0.95);
+      addMesh(statue, new Sph(0.15, 12, 12), MATS.lanternRed, vx * 0.72, 1.58, 1.28);
     });
     let resonanceBoost = 0;
     addBoxCol(-8.5, 8.5, -18.5, -11.2); addBoxCol(-8.5, -7.2, -18.5, -6.8); addBoxCol(7.2, 8.5, -18.5, -6.8);
