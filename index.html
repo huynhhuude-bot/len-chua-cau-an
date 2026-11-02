@@ -1,0 +1,1647 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Lên Chùa Cầu An — Phước Linh Cổ Tự</title>
+  <style>
+    :root { --gold:#f6c967; --gold-lt:#ffe49e; --wood:rgba(34,20,14,0.92); --cream:#fff6e5; --muted:#dcc8ad; }
+    * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; -webkit-user-select:none; }
+    input, textarea { user-select:text; -webkit-user-select:text; }
+    html, body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; background:#1a0f0a; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; color:var(--cream); touch-action:none; }
+    #game-canvas { position:fixed; inset:0; width:100%; height:100%; display:block; z-index:1; }
+    @keyframes shake { 0%,100%{transform:translate(0,0)} 25%{transform:translate(-4px,3px)} 50%{transform:translate(4px,-3px)} 75%{transform:translate(-3px,-2px)} }
+    .shake { animation:shake 0.45s ease-out; }
+    #bubbles-layer { position:fixed; inset:0; pointer-events:none; z-index:5; overflow:hidden; }
+    .ai-bubble { position:absolute; transform:translate(-50%,-100%); background:rgba(255,248,232,0.95); color:#3a1f10; padding:5px 11px; border-radius:14px; font-size:12px; font-weight:600; white-space:nowrap; box-shadow:0 4px 12px rgba(0,0,0,0.35); border:1.5px solid #e0b25b; transition:opacity 0.25s; }
+    .zone-label { position:absolute; transform:translate(-50%,-50%); background:rgba(40,20,12,0.84); color:var(--gold-lt); border:1px solid rgba(246,201,103,0.65); padding:3px 9px; border-radius:999px; font-size:11px; font-weight:600; white-space:nowrap; }
+    #hud { position:fixed; inset:0; pointer-events:none; z-index:10; display:flex; flex-direction:column; justify-content:space-between; padding:env(safe-area-inset-top,10px) 12px env(safe-area-inset-bottom,14px); }
+    .hud-top { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
+    .hud-pill { pointer-events:auto; background:var(--wood); border:1px solid rgba(246,201,103,0.45); border-radius:16px; padding:7px 12px; font-size:12.5px; box-shadow:0 4px 16px rgba(0,0,0,0.4); }
+    .visitor-counter { font-weight:600; color:var(--gold-lt); }
+    .visitor-counter span { color:#fff; font-weight:800; }
+    .hud-actions { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+    .icon-btn { pointer-events:auto; background:var(--wood); color:var(--gold-lt); border:1px solid rgba(246,201,103,0.5); border-radius:14px; padding:8px 11px; font-size:13px; font-weight:600; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.35); }
+    #toast-banner { position:fixed; top:66px; left:50%; transform:translateX(-50%); background:rgba(58,24,14,0.94); border:1px solid var(--gold); color:var(--gold-lt); padding:7px 15px; border-radius:999px; font-size:12.5px; font-weight:600; z-index:15; opacity:0; pointer-events:none; transition:opacity 0.35s; white-space:nowrap; }
+    #toast-banner.show { opacity:1; }
+    .hud-bottom { display:flex; justify-content:space-between; align-items:flex-end; width:100%; min-height:136px; }
+    #joystick-zone { pointer-events:auto; width:120px; height:120px; border-radius:50%; background:radial-gradient(circle,rgba(246,201,103,0.16),rgba(28,16,10,0.68)); border:2px solid rgba(246,201,103,0.45); position:relative; display:flex; align-items:center; justify-content:center; touch-action:none; }
+    #joystick-knob { width:48px; height:48px; border-radius:50%; background:radial-gradient(circle at 32% 32%,#ffe9b3,#d6933a); border:2px solid #fff3d1; pointer-events:none; }
+    #joystick-hint { position:absolute; bottom:-20px; left:50%; transform:translateX(-50%); font-size:11px; color:var(--muted); white-space:nowrap; text-shadow:0 1px 3px #000; }
+    #action-btn { pointer-events:auto; background:linear-gradient(135deg,#b92b27,#831616); color:#fff6e0; border:2.5px solid var(--gold); border-radius:24px; padding:14px 22px; font-size:16px; font-weight:800; cursor:pointer; box-shadow:0 0 24px rgba(246,201,103,0.55); display:none; align-items:center; gap:8px; margin-bottom:8px; }
+    #action-btn.visible { display:inline-flex; }
+    .overlay-screen { position:fixed; inset:0; z-index:30; background:radial-gradient(circle,rgba(74,32,18,0.8),rgba(16,9,6,0.95)); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; padding:16px; }
+    .hidden { display:none !important; }
+    .card-dialog { width:100%; max-width:435px; max-height:90vh; overflow-y:auto; background:linear-gradient(180deg,#361b10,#1c0e08); border:2.5px solid var(--gold); outline:1px solid rgba(246,201,103,0.35); outline-offset:-6px; border-radius:24px; padding:22px 18px; box-shadow:0 18px 52px rgba(0,0,0,0.82), inset 0 0 28px rgba(246,201,103,0.12); text-align:center; position:relative; }
+    .card-dialog::before { content:"❖ ─── 🪷 ─── ❖"; display:block; color:var(--gold); font-size:11px; letter-spacing:3px; opacity:0.85; margin-bottom:6px; }
+    @keyframes unrollScroll { 0%{transform:scaleY(0.15);opacity:0} 100%{transform:scaleY(1);opacity:1} }
+    .scroll-unroll { transform-origin:top center; animation:unrollScroll 0.45s cubic-bezier(0.22,1,0.36,1); }
+    .temple-badge { display:inline-block; background:rgba(143,29,29,0.9); border:1px solid var(--gold); color:var(--gold-lt); padding:4px 14px; border-radius:999px; font-size:12px; font-weight:700; text-transform:uppercase; margin-bottom:6px; letter-spacing:0.8px; }
+    .dialog-title { font-size:24px; font-weight:800; color:var(--gold-lt); margin:4px 0 8px; text-shadow:0 2px 8px rgba(0,0,0,0.6); font-family:Georgia,"Times New Roman",serif; }
+    .dialog-sub { font-size:13.5px; color:var(--muted); line-height:1.5; margin-bottom:14px; }
+    .input-field { width:100%; background:rgba(15,8,5,0.78); border:1.5px solid rgba(246,201,103,0.6); border-radius:14px; padding:11px 14px; color:#fff; font-size:15px; outline:none; margin-bottom:12px; text-align:center; }
+    .primary-btn { width:100%; background:linear-gradient(135deg,#d89638,#9b5b18); color:#fff9ec; border:2px solid var(--gold-lt); border-radius:16px; padding:12px 18px; font-size:16px; font-weight:800; cursor:pointer; box-shadow:0 4px 15px rgba(216,150,56,0.35); }
+    .secondary-btn { background:rgba(255,255,255,0.08); color:var(--cream); border:1px solid rgba(246,201,103,0.45); border-radius:14px; padding:10px 15px; font-size:14px; font-weight:600; cursor:pointer; }
+    .close-x { position:absolute; top:12px; right:12px; width:32px; height:32px; border-radius:50%; border:1px solid rgba(246,201,103,0.4); background:rgba(0,0,0,0.35); color:var(--cream); cursor:pointer; }
+    #tutorial-bar { position:fixed; bottom:150px; left:50%; transform:translateX(-50%); width:calc(100% - 24px); max-width:420px; background:rgba(36,18,11,0.95); border:1.5px solid var(--gold); border-radius:18px; padding:11px 14px; z-index:20; display:flex; align-items:center; justify-content:space-between; gap:10px; font-size:12.5px; }
+    #photo-bar { position:fixed; bottom:18px; left:50%; transform:translateX(-50%); width:calc(100% - 24px); max-width:500px; background:rgba(30,15,9,0.95); border:2px solid var(--gold); border-radius:20px; padding:12px 14px; z-index:22; text-align:center; box-shadow:0 10px 32px rgba(0,0,0,0.75); pointer-events:auto; }
+    .outfit-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:12px; }
+    .outfit-card { background:rgba(255,246,229,0.06); border:1.5px solid rgba(246,201,103,0.35); border-radius:14px; padding:8px 6px; font-size:12.5px; font-weight:700; color:var(--cream); cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; }
+    .outfit-card.active { background:rgba(216,150,56,0.28); border-color:var(--gold-lt); color:var(--gold-lt); box-shadow:0 0 12px rgba(246,201,103,0.3); }
+    .calligraphy-scroll { background:linear-gradient(180deg,#b71c1c,#7f0000); border:3px solid var(--gold); border-radius:16px; padding:14px 12px; margin:10px auto; max-width:260px; box-shadow:0 8px 24px rgba(0,0,0,0.5); color:#ffe599; }
+    .calligraphy-char { font-family:Georgia,"Times New Roman",serif; font-size:52px; font-weight:900; color:#ffd966; text-shadow:0 3px 10px rgba(0,0,0,0.65); margin:4px 0; }
+    .breath-circle { width:136px; height:136px; border-radius:50%; margin:12px auto; border:3px solid var(--gold); background:radial-gradient(circle,rgba(246,201,103,0.35),rgba(143,29,29,0.25)); display:flex; flex-direction:column; align-items:center; justify-content:center; transition:transform 3.8s ease-in-out, box-shadow 3.8s ease-in-out; box-shadow:0 0 24px rgba(246,201,103,0.4); }
+    .choice-row { display:flex; gap:10px; justify-content:center; margin:10px 0; }
+    .choice-card { flex:1; background:rgba(255,246,229,0.07); border:1.5px solid rgba(246,201,103,0.4); border-radius:16px; padding:11px 8px; color:var(--cream); cursor:pointer; font-weight:700; }
+    .choice-card.active { background:rgba(216,150,56,0.28); border-color:var(--gold-lt); }
+    .rhythm-arena { position:relative; width:200px; height:200px; margin:8px auto 12px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+    .target-circle { position:absolute; width:96px; height:96px; border-radius:50%; border:3px dashed var(--gold); background:radial-gradient(circle,rgba(246,201,103,0.22),rgba(143,29,29,0.35)); display:flex; align-items:center; justify-content:center; font-size:36px; }
+    .shrinking-ring { position:absolute; border-radius:50%; border:4px solid #fff1b8; box-shadow:0 0 14px var(--gold); pointer-events:none; }
+    .rhythm-feedback { min-height:24px; font-size:15px; font-weight:800; color:var(--gold-lt); margin-bottom:6px; }
+    .chip-list { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-bottom:10px; }
+    .wish-chip { background:rgba(246,201,103,0.14); border:1px solid rgba(246,201,103,0.45); color:var(--gold-lt); padding:5px 10px; border-radius:999px; font-size:12px; cursor:pointer; }
+    .fortune-box { background:linear-gradient(180deg,#fff6e0,#f2d89c); color:#3d1d0e; border:2.5px solid #b57c2c; border-radius:16px; padding:14px 12px; margin:10px 0; box-shadow:0 6px 18px rgba(0,0,0,0.35); }
+    .fortune-title { font-size:18px; font-weight:800; color:#8f1d1d; margin-bottom:4px; font-family:Georgia,serif; }
+    .fortune-poem { font-style:italic; font-weight:700; line-height:1.5; margin:6px 0; color:#2c1409; }
+    .disclaimer-note { font-size:11.5px; color:var(--muted); opacity:0.85; margin-top:8px; }
+    .journal-section { text-align:left; background:rgba(0,0,0,0.28); border:1px solid rgba(246,201,103,0.3); border-radius:14px; padding:8px 11px; margin-bottom:8px; max-height:125px; overflow-y:auto; }
+    .journal-item { padding:5px 0; border-bottom:1px dashed rgba(246,201,103,0.2); font-size:12.5px; }
+    .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:10px; }
+    .stat-box { background:rgba(246,201,103,0.1); border:1px solid rgba(246,201,103,0.35); border-radius:12px; padding:7px 4px; }
+    .stat-num { font-size:17px; font-weight:800; color:var(--gold-lt); }
+    .stat-label { font-size:10.5px; color:var(--muted); }
+    #share-preview-img { width:100%; max-width:255px; border-radius:14px; border:2px solid var(--gold); margin:6px auto 10px; display:block; }
+  </style>
+  <script type="importmap">
+    { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+  </script>
+</head>
+<body>
+  <canvas id="game-canvas"></canvas>
+  <div id="bubbles-layer"></div>
+  <div id="toast-banner">🙏 Đoàn khách hành hương vừa tới cổng Tam Quan</div>
+
+  <div id="hud">
+    <div class="hud-top">
+      <div class="hud-pill">
+        <div style="font-size:11px;color:var(--muted);">Phước Linh Cổ Tự • <span id="sky-label-el" style="color:var(--gold);">Hoàng hôn</span></div>
+        <div class="visitor-counter">Hôm nay có <span id="visitor-count-el">1.248</span> người lên chùa cầu an</div>
+      </div>
+      <div class="hud-actions">
+        <button class="icon-btn" id="btn-weather">🌅 Cảnh sắc</button>
+        <button class="icon-btn" id="btn-photo">🙏 Chiêm bái / Ảnh</button>
+        <button class="icon-btn" id="btn-sound">🔊 Tiếng chùa</button>
+        <button class="icon-btn" id="btn-journal">📜 Sổ cầu an</button>
+        <button class="icon-btn" id="btn-share-open">🌸 Chia sẻ</button>
+      </div>
+    </div>
+    <div class="hud-bottom" id="hud-bottom-controls">
+      <div id="joystick-zone">
+        <div id="joystick-knob"></div>
+        <div id="joystick-hint">Kéo để đi • Vuốt màn để xoay</div>
+      </div>
+      <button id="action-btn">🙏 Thắp hương</button>
+    </div>
+  </div>
+
+  <div id="photo-bar" class="hidden">
+    <div style="font-size:13px;font-weight:800;color:var(--gold-lt);margin-bottom:6px;">🙏 Chế Độ Chiêm Bái & Chụp Ảnh Kỷ Niệm</div>
+    <div class="chip-list" id="photo-angles">
+      <span class="wish-chip" data-cam="buddha">🪷 Chiêm bái Tự Tại Phật</span>
+      <span class="wish-chip" data-cam="overview">🏯 Toàn cảnh cổ tự</span>
+      <span class="wish-chip" data-cam="pond">🏮 Đài Quan Âm & Hồ sen</span>
+      <span class="wish-chip" data-cam="player">👤 Góc nhìn nhân vật</span>
+    </div>
+    <div class="chip-list" id="photo-poses">
+      <span class="wish-chip" data-pose="bow">🙏 Chắp tay lễ</span>
+      <span class="wish-chip" data-pose="meditate">🧘 Ngồi thiền định</span>
+      <span class="wish-chip" data-pose="stand">🌿 Đứng trang nghiêm</span>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:6px;">
+      <button class="primary-btn" id="btn-photo-snap" style="padding:8px 14px;font-size:13.5px;width:auto;">📸 Chụp & Tạo thiệp 1080×1350</button>
+      <button class="secondary-btn" id="btn-photo-close" style="padding:8px 14px;font-size:13px;">Đóng</button>
+    </div>
+  </div>
+
+  <div id="tutorial-bar" class="hidden">
+    <div id="tutorial-text"><b>Hướng dẫn (1/3):</b> Dùng cần điều khiển góc trái (hoặc WASD/Mũi tên) để đi dạo.</div>
+    <button class="secondary-btn" id="btn-skip-tut" style="padding:6px 10px;font-size:12px;">Bỏ qua</button>
+  </div>
+
+  <div id="welcome-screen" class="overlay-screen">
+    <div class="card-dialog">
+      <div class="temple-badge">Phước Linh Cổ Tự</div>
+      <h1 class="dialog-title">Lên Chùa Cầu An</h1>
+      <div id="shared-blessing-banner" class="fortune-box scroll-unroll hidden" style="margin-bottom:12px;"></div>
+      <p class="dialog-sub">Chậm lại một nhịp giữa tiếng chuông chiều, khoác trang phục truyền thống, thắp nén tâm hương và gửi ước nguyện bình an.</p>
+      <input id="player-name-input" class="input-field" type="text" maxlength="28" placeholder="Nhập tên của bạn (ví dụ: Minh An)..." />
+      <div style="font-size:12px;color:var(--gold-lt);font-weight:700;margin-bottom:6px;">Chọn trang phục lễ chùa:</div>
+      <div class="outfit-grid" id="welcome-outfit-grid">
+        <div class="outfit-card active" data-outfit="lam">🩵 Áo Lam Phật Tử</div>
+        <div class="outfit-card" data-outfit="aodai_do">❤️ Áo Dài Đỏ Xuân</div>
+        <div class="outfit-card" data-outfit="aotac_vang">💛 Áo Tấc Hoàng Kim</div>
+        <div class="outfit-card" data-outfit="nausong">🤎 Áo Nâu Sồng</div>
+      </div>
+      <button id="btn-enter-temple" class="primary-btn">🙏 Vào Chùa</button>
+      <div class="disclaimer-note">Không đăng nhập • Không thu thập dữ liệu • Không quảng cáo</div>
+    </div>
+  </div>
+
+  <div id="activity-modal" class="overlay-screen hidden">
+    <div class="card-dialog" id="activity-dialog-content"></div>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    const Grp=THREE.Group,V3=THREE.Vector3,Col=THREE.Color,Box=THREE.BoxGeometry,Cyl=THREE.CylinderGeometry,Sph=THREE.SphereGeometry,Cone=THREE.ConeGeometry,Ring=THREE.RingGeometry,Plane=THREE.PlaneGeometry,Torus=THREE.TorusGeometry,MatS=THREE.MeshStandardMaterial,MatB=THREE.MeshBasicMaterial;
+
+    /* === 1. LƯU TRỮ (LOCALSTORAGE), LỌC TỪ THÔ TỤC & 40 QUẺ ĐẦU NĂM TÍCH CỰC === */
+    const STORAGE_KEY = 'len_chua_cau_an_save_v1';
+    const DEFAULT_SAVE = { playerName: '', outfit: 'lam', incenseCount: 0, bestTamAnScore: 0, wishes: [], fortunes: [], calligraphies: [], meditationCount: 0, tutorialDone: false, visitorBase: 1248 };
+    const saveData = (() => {
+      try {
+        const p = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        return {
+          ...DEFAULT_SAVE, ...p,
+          wishes: Array.isArray(p.wishes) ? p.wishes : [],
+          fortunes: Array.isArray(p.fortunes) ? p.fortunes : [],
+          calligraphies: Array.isArray(p.calligraphies) ? p.calligraphies : []
+        };
+      } catch { return { ...DEFAULT_SAVE }; }
+    })();
+    const saveGameData = () => { try { localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData)); } catch {} };
+
+    const CALLIGRAPHY_LIST = [
+      { word: 'AN', title: 'Chữ AN (Bình An)', poem: 'Tâm an vạn sự tự nhiên lành,\nTrăng sáng soi gương mặt nước xanh.', desc: 'Cầu mong tâm hồn thanh thản, gia đạo êm ấm, bốn mùa không vướng âu lo.' },
+      { word: 'PHÚC', title: 'Chữ PHÚC (Phúc Đức)', poem: 'Cây có cội mới đơm chồi biếc,\nNước có nguồn mới dậy phúc lành.', desc: 'Sống hiền hòa, trao đi thiện ý để vun bồi phúc ấm cho gia đình.' },
+      { word: 'TÂM', title: 'Chữ TÂM (Tâm Sáng)', poem: 'Giữ lòng trong sáng tựa gương thu,\nMột niệm thiện lành vạn dặm vui.', desc: 'Tâm sáng suốt và chân thành là ngọn đèn soi đường vững chãi nhất.' },
+      { word: 'NHẪN', title: 'Chữ NHẪN (Hòa Nhẫn)', poem: 'Nhẫn một chút sóng êm biển lặng,\nLùi một bước trời rộng mênh mông.', desc: 'Sự điềm tĩnh, bao dung giúp hóa giải mọi chuyện lớn thành nhỏ.' },
+      { word: 'HIẾU', title: 'Chữ HIẾU (Hiếu Thuận)', poem: 'Công cha nghĩa mẹ tựa trời cao,\nHiếu thảo vuông tròn phúc dạt dào.', desc: 'Lòng biết ơn và kính yêu cha mẹ ông bà là gốc rễ của mọi điều thiện.' },
+      { word: 'TRÍ', title: 'Chữ TRÍ (Trí Tuệ)', poem: 'Đọc sách mở mang nguồn trí sáng,\nVững lòng học hỏi vượt ngàn mây.', desc: 'Chúc việc học hành, thi cử và suy xét luôn sáng suốt, hanh thông.' },
+      { word: 'ĐỨC', title: 'Chữ ĐỨC (Tâm Đức)', poem: 'Tiên tổ trồng cây lưu bóng mát,\nCon hiền giữ đức nở hoa thơm.', desc: 'Lấy chữ Đức làm đầu để đi đến đâu cũng được quý mến, tin yêu.' },
+      { word: 'LỘC', title: 'Chữ LỘC (Chồi Lộc Xuân)', poem: 'Lộc biếc đầu cành vươn nắng sớm,\nCần lao gặt hái quả ngọt lành.', desc: 'Biểu tượng của sức sống mới, sự chăm chỉ đơm hoa kết trái.' }
+    ];
+
+    const BAD_WORDS = ['dm','dkm','vcl','vl','cc','cl','dit','địt','đụ','du ma','đụ má','lồn','lon','buồi','buoi','cặc','cac','đéo','deo','chó đẻ','ngu si','fuck','shit','bitch'];
+    function containsProfanity(text) {
+      const s = text.toLowerCase();
+      return BAD_WORDS.some(w => new RegExp(`(^|\\s|[.,!?;:])${w}($|\\s|[.,!?;:])`, 'i').test(s) || s.includes('địt') || s.includes('đéo'));
+    }
+
+    const FORTUNE_RAW = [
+      "Quẻ Xuân Hòa|Gió xuân khẽ chạm hiên nhà, Lòng an một niệm nở hoa bốn mùa.|Giữ nhịp sống điều độ, những điều giản dị quanh bạn đang mang lại niềm vui bền vững.",
+      "Quẻ Tâm Sáng|Trăng rằm soi bóng hồ trong, Việc làm ngay thẳng tấm lòng thảnh thơi.|Sự chân thành và kiên nhẫn sẽ giúp bạn tháo gỡ mọi băn khoăn trong học tập và công việc.",
+      "Quẻ Bồ Đề|Dưới tán lá biếc bình yên, Mỗi ngày cố gắng ưu phiền tự tan.|Đừng ngại bước chậm, chỉ cần mỗi ngày tiến thêm một chút là đã rất đáng quý.",
+      "Quẻ Sen Hồng|Sen vươn khỏi nước bùn sâu, Hương thơm thanh khiết bền lâu tháng ngày.|Giữ vững tinh thần lạc quan, nỗ lực thầm lặng của bạn sẽ sớm kết trái ngọt.",
+      "Quẻ Gia Đạo|Cơm nhà ấm áp tiếng cười, Thuận hòa trên dưới rạng ngời tình thân.|Dành thêm thời gian lắng nghe và trò chuyện cùng người thân yêu trong tuần này nhé.",
+      "Quẻ Tri Âm|Đường xa gặp bạn hiền hòa, Cùng nhau san sẻ vượt qua dốc đồi.|Một lời hỏi thăm chân thành hôm nay sẽ gắn kết thêm tình bạn đẹp.",
+      "Quẻ Khai Trí|Đèn khuya đọc sách chuyên cần, Mưa dầm thấm đất muôn phần vững tâm.|Kiên trì ôn luyện và giữ tâm thế bình tĩnh sẽ giúp bạn phát huy trọn vẹn khả năng.",
+      "Quẻ Thuận Phong|Cánh buồm đón gió ban mai, Điềm nhiên vững lái đường dài nở hoa.|Mọi kế hoạch khi được chuẩn bị chu đáo đều sẽ diễn ra suôn sẻ, nhịp nhàng.",
+      "Quẻ An Nhiên|Nghe chuông chiều vọng ngân nga, Buông đi vội vã tâm hòa cùng mây.|Khi mệt mỏi, hãy cho phép bản thân nghỉ ngơi đôi chút để nạp lại năng lượng ấm áp.",
+      "Quẻ Hiếu Hòa|Lời hay như suối mát lành, Trao đi thiện ý kết nhành tin yêu.|Sự dịu dàng trong lời nói hôm nay sẽ mang lại niềm vui cho cả bạn và người đối diện.",
+      "Quẻ Kiên Định|Tre xanh vững gốc trước giông, Dẻo dai bền bỉ nắng hồng lại lên.|Khó khăn nhỏ chỉ là dịp để bạn nhận ra mình mạnh mẽ và trưởng thành hơn.",
+      "Quẻ Tinh Tấn|Hạt mầm ủ đất mùa xuân, Chăm tưới mỗi sớm thêm phần xanh tươi.|Thói quen tốt được duy trì đều đặn sẽ mở ra những trang mới đầy hứng khởi.",
+      "Quẻ Thanh Lương|Mưa rào tưới mát sân chùa, Lắng nghe hơi thở bốn mùa bình an.|Hãy trân trọng từng khoảnh khắc hiện tại, tâm bình thì vạn sự đều nhẹ nhàng.",
+      "Quẻ Đoàn Viên|Trà thơm ấm chén sum vầy, Chuyện trò ấm áp đong đầy yêu thương.|Bữa cơm ấm cúng bên gia đình chính là điểm tựa bình yên nhất của mỗi người.",
+      "Quẻ Minh Triết|Nhìn xa trông rộng từng ngày, Khiêm nhường học hỏi bàn tay vững vàng.|Giữ tinh thần ham học hỏi sẽ mang đến cho bạn nhiều góc nhìn thú vị và sáng tạo.",
+      "Quẻ Từ Hòa|Thương người như thể thương thân, Cho đi nụ cười vạn phần an vui.|Một cử chỉ giúp đỡ nhỏ bé cũng đủ làm ấm lòng người xung quanh.",
+      "Quẻ Cát Tường|Mây lành quy tụ hiên xưa, Tâm không vướng bận nắng mưa cũng hiền.|Khi lòng biết đủ và biết ơn, mỗi ngày thức dậy đều là một ngày lành.",
+      "Quẻ Nắng Mới|Sương tan trên nhánh mai vàng, Bước chân vững chãi thênh thang dặm trường.|Hãy tự tin bắt đầu dự định mà bạn đã ấp ủ bấy lâu nay.",
+      "Quẻ Tĩnh Lặng|Mặt hồ không gợn sóng xao, Nhìn rõ mây trắng trời cao nhiệm màu.|Trước mỗi quyết định, một phút hít thở sâu sẽ giúp bạn sáng suốt hơn rất nhiều.",
+      "Quẻ Bền Bỉ|Kiến tha lâu cũng đầy tổ, Chăm chỉ từng bước rạng rỡ ngày mai.|Sự cần mẫn không bao giờ phụ lòng người có chí.",
+      "Quẻ Hương Sen|Gió đưa hương ngát qua cầu, Tâm tư trong sáng đi đâu cũng lành.|Giữ suy nghĩ tích cực sẽ thu hút những người bạn đồng hành tốt bụng.",
+      "Quẻ Vững Chãi|Núi cao đứng giữa đất trời, Bình tâm trước việc rạng ngời niềm tin.|Đừng lo lắng trước những thay đổi, bạn có đủ sự chuẩn bị để thích nghi tốt.",
+      "Quẻ Hạnh Ngộ|Duyên lành gặp gỡ đầu xuân, Trao câu chúc tốt muôn phần hân hoan.|Hãy mở lòng đón nhận những cuộc trò chuyện và ý tưởng mới mẻ.",
+      "Quẻ Ánh Đèn|Hoa đăng tỏa sáng mặt hồ, Ước mong giản dị bến bờ bình yên.|Những mục tiêu rõ ràng, vừa sức sẽ giúp bạn đi xa và vui vẻ trên hành trình.",
+      "Quẻ Mùa Gặt|Bao ngày vun xới cần lao, Nay mùa lúa chín ngọt ngào hương quê.|Công sức bạn bỏ ra trong thời gian qua đang dần mang lại kết quả xứng đáng.",
+      "Quẻ Khởi Đầu|Trang giấy trắng mở đầu năm, Nét chữ ngay ngắn ươm mầm ước mơ.|Mọi thời điểm đều là lúc tuyệt vời để bắt đầu một thói quen lành mạnh.",
+      "Quẻ Bao Dung|Biển rộng bởi biết dung sông, Lòng người rộng mở mênh mông nắng chiều.|Bỏ qua những hiểu lầm vụn vặt sẽ giúp tâm hồn bạn nhẹ nhõm như mây.",
+      "Quẻ Sáng Tạo|Chim ca trên nhánh lộc non, Ý hay nảy nở vuông tròn niềm vui.|Hãy thử góc nhìn mới cho công việc quen thuộc, bạn sẽ thấy nhiều niềm cảm hứng.",
+      "Quẻ Bình Minh|Chân trời ửng sắc hồng tươi, Khởi tâm thiện lành rạng ngời ngày xanh.|Khởi đầu ngày mới bằng một nụ cười và lòng biết ơn cuộc sống.",
+      "Quẻ Tri Kỷ|Đường đời có bạn đồng hành, Chia ngọt sẻ bùi chân thành bền lâu.|Hãy trân trọng những người luôn âm thầm ủng hộ và động viên bạn.",
+      "Quẻ Thư Thái|Lá rơi khẽ chạm thềm rêu, Lòng không hối hả mọi điều tự an.|Sắp xếp công việc gọn gàng từng việc một, bạn sẽ thấy ngày dài thật thong thả.",
+      "Quẻ Ươm Mầm|Chồi non hé nụ đầu cành, Nắng ấm chan hòa lá xanh rợp trời.|Những kiến thức bạn tích lũy hôm nay sẽ trở thành hành trang quý giá ngày mai.",
+      "Quẻ Hòa Âm|Tiếng chuông hòa nhịp tiếng tơ, Trong ngoài êm ấm bến bờ an vui.|Sự hài hòa giữa làm việc và nghỉ ngơi là chìa khóa cho tinh thần minh mẫn.",
+      "Quẻ Đằm Thắm|Phù sa bồi đắp đôi bờ, Tình người ấm áp ước mơ vững bền.|Sự chân thật và giản dị luôn có sức lan tỏa bền lâu nhất.",
+      "Quẻ Vượt Sóng|Thuyền nan vững mái chèo khua, Qua cơn sóng nhỏ bốn mùa trời trong.|Hãy tin vào năng lực của chính mình, bạn hoàn toàn làm chủ được tình huống.",
+      "Quẻ Niệm Lành|Một lời chúc tốt trao nhau, Hoa tâm nở rộ bền lâu nghĩa tình.|Chúc điều lành cho người khác cũng là lúc tâm mình tràn ngập niềm vui.",
+      "Quẻ Trăng Thanh|Gió đưa trúc mọc đầu đình, Lòng ngay chí sáng hành trình thảnh thơi.|Sự minh bạch và rõ ràng sẽ giúp công việc chung trôi chảy thuận lợi.",
+      "Quẻ Suối Nguồn|Nước nguồn trong vắt chảy xuôi, Nuôi cây xanh lá nuôi người bền tâm.|Hãy giữ gìn sức khỏe bằng giấc ngủ đúng giờ và vận động nhẹ nhàng mỗi ngày.",
+      "Quẻ Mùa Xuân|Én chao nghiêng cánh giữa trời, Tin vui gõ cửa rạng ngời ước mong.|Đón nhận tuần mới với tâm thế chủ động và niềm vui khám phá.",
+      "Quẻ Viên Mãn|Trăm sông rồi cũng về nguồn, Giữ tâm thanh tịnh vui buồn nhẹ tênh.|Chúc bạn và gia đình một năm mới bình an, hòa thuận và tràn đầy yêu thương."
+    ];
+    const FORTUNE_LIST = FORTUNE_RAW.map((line, idx) => {
+      const [name, poem, msg] = line.split('|');
+      return { id: idx + 1, name, poem, msg };
+    });
+
+    /* === 2. ÂM THANH WEB AUDIO (GIÓ, CHIM, LÁ XÀO XẠC, TỤNG KINH, CHUÔNG, MÕ) === */
+    class TempleAudioEngine {
+      constructor() { this.ctx = null; this.muted = false; this.started = false; this.master = null; }
+      init() {
+        if (this.started) { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); return; }
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        this.ctx = new AC();
+        this.master = this.ctx.createGain();
+        this.master.gain.value = this.muted ? 0 : 0.75;
+        this.master.connect(this.ctx.destination);
+        this.started = true;
+        this.startWindAndChant();
+        this.loopNature();
+      }
+      toggleMute() {
+        this.muted = !this.muted;
+        if (!this.started) this.init();
+        if (this.master && this.ctx) this.master.gain.setTargetAtTime(this.muted ? 0 : 0.75, this.ctx.currentTime, 0.12);
+        return this.muted;
+      }
+      startWindAndChant() {
+        const sr = this.ctx.sampleRate, buf = this.ctx.createBuffer(1, sr * 3, sr), d = buf.getChannelData(0);
+        let last = 0;
+        for (let i = 0; i < d.length; i++) { last = (last + 0.02 * (Math.random() * 2 - 1)) / 1.02; d[i] = last * 1.7; }
+        const noise = this.ctx.createBufferSource(); noise.buffer = buf; noise.loop = true;
+        const bp = this.ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 340; bp.Q.value = 1.8;
+        const wg = this.ctx.createGain(); wg.gain.value = 0.08;
+        noise.connect(bp); bp.connect(wg); wg.connect(this.master); noise.start();
+
+        // Tiếng tụng kinh trầm ấm từ xa
+        [110, 164.8].forEach(freq => {
+          const o = this.ctx.createOscillator(), lp = this.ctx.createBiquadFilter(), g = this.ctx.createGain();
+          o.type = 'triangle'; o.frequency.value = freq; lp.type = 'lowpass'; lp.frequency.value = 240; g.gain.value = 0.024;
+          o.connect(lp); lp.connect(g); g.connect(this.master); o.start();
+        });
+      }
+      loopNature() {
+        const tick = () => {
+          if (this.ctx && !this.muted && this.ctx.state === 'running') {
+            const r = Math.random();
+            if (r < 0.32) this.playBird();
+            else if (r < 0.62) this.playWindChime();
+            else if (r < 0.84) this.playMo('ambient');
+            else this.playBell(0.55, true);
+          }
+          setTimeout(tick, 3200 + Math.random() * 3600);
+        };
+        setTimeout(tick, 2000);
+      }
+      playWindChime() {
+        if (!this.ctx || this.muted) return;
+        const notes = [1046.5, 1174.66, 1318.5, 1567.98, 1760.0];
+        for (let i = 0; i < 3; i++) {
+          const t = this.ctx.currentTime + i * (0.11 + Math.random() * 0.08);
+          const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+          o.type = 'sine';
+          o.frequency.setValueAtTime(notes[Math.floor(Math.random() * notes.length)], t);
+          g.gain.setValueAtTime(0.0001, t);
+          g.gain.linearRampToValueAtTime(0.032, t + 0.01);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + 1.15);
+          o.connect(g); g.connect(this.master); o.start(t); o.stop(t + 1.2);
+        }
+      }
+      playBird() {
+        if (!this.ctx || this.muted) return;
+        const t = this.ctx.currentTime, o = this.ctx.createOscillator(), g = this.ctx.createGain(), f = 1900 + Math.random() * 650;
+        o.frequency.setValueAtTime(f, t);
+        o.frequency.exponentialRampToValueAtTime(f * 1.28, t + 0.09);
+        o.frequency.exponentialRampToValueAtTime(f * 0.95, t + 0.18);
+        o.frequency.exponentialRampToValueAtTime(f * 1.32, t + 0.27);
+        g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.024, t + 0.04); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.31);
+        o.connect(g); g.connect(this.master); o.start(t); o.stop(t + 0.33);
+      }
+      playBell(power = 1.0, distant = false) {
+        if (!this.ctx || this.muted) return;
+        const t = this.ctx.currentTime, base = 196, dur = distant ? 3.4 : (4.2 + power * 2.4), scale = distant ? 0.13 : (0.52 * Math.max(0.4, power));
+        [1, 2, 2.41, 3, 4.18, 5.43].forEach((ratio, i) => {
+          const o = this.ctx.createOscillator(), g = this.ctx.createGain(), dec = dur / (1 + i * 0.45);
+          o.type = i % 2 === 0 ? 'sine' : 'triangle';
+          o.frequency.setValueAtTime(base * ratio, t);
+          if (i === 1 || i === 2) o.frequency.linearRampToValueAtTime(base * ratio + 1.1, t + dec);
+          g.gain.setValueAtTime(0.0001, t);
+          g.gain.linearRampToValueAtTime((0.34 / (i + 1)) * scale, t + 0.018);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + dec);
+          o.connect(g); g.connect(this.master); o.start(t); o.stop(t + dec + 0.05);
+        });
+      }
+      playMo(grade = 'perfect') {
+        if (!this.ctx || this.muted) return;
+        const t = this.ctx.currentTime, o = this.ctx.createOscillator(), bp = this.ctx.createBiquadFilter(), g = this.ctx.createGain();
+        const f = grade === 'perfect' ? 520 : (grade === 'good' ? 495 : (grade === 'ambient' ? 470 : 390));
+        o.type = 'triangle';
+        o.frequency.setValueAtTime(f * 1.18, t); o.frequency.exponentialRampToValueAtTime(f * 0.86, t + 0.18);
+        bp.type = 'bandpass'; bp.frequency.value = f * 1.4; bp.Q.value = 4.2;
+        g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(grade === 'ambient' ? 0.05 : 0.36, t + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.21);
+        o.connect(bp); bp.connect(g); g.connect(this.master); o.start(t); o.stop(t + 0.23);
+      }
+      playWishChime() {
+        if (!this.ctx || this.muted) return;
+        [523.25, 659.25, 783.99, 1046.5].forEach((f, i) => {
+          const t = this.ctx.currentTime + i * 0.09, o = this.ctx.createOscillator(), g = this.ctx.createGain();
+          o.frequency.setValueAtTime(f, t);
+          g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.13, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.85);
+          o.connect(g); g.connect(this.master); o.start(t); o.stop(t + 0.9);
+        });
+      }
+      playShakeStick() {
+        if (!this.ctx || this.muted) return;
+        for (let i = 0; i < 3; i++) {
+          const t = this.ctx.currentTime + i * 0.065, o = this.ctx.createOscillator(), g = this.ctx.createGain();
+          o.type = 'square'; o.frequency.setValueAtTime(750 + Math.random() * 450, t);
+          g.gain.setValueAtTime(0.001, t); g.gain.linearRampToValueAtTime(0.08, t + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.045);
+          o.connect(g); g.connect(this.master); o.start(t); o.stop(t + 0.05);
+        }
+      }
+    }
+    const audio = new TempleAudioEngine();
+
+    /* === 3. BỐI CẢNH 3D CHÙA VIỆT ("PHƯỚC LINH CỔ TỰ") === */
+    const canvas = document.getElementById('game-canvas');
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+
+    const scene = new THREE.Scene();
+    scene.background = new Col(0x3a1c28);
+    scene.fog = new THREE.FogExp2(0x3a1c28, 0.014);
+    const camera = new THREE.PerspectiveCamera(52, window.innerWidth / window.innerHeight, 0.2, 130);
+
+    const managedTextures = new Set();
+    const regTex = (t) => { managedTextures.add(t); return t; };
+    const disposeUnusedTextures = () => { for (const t of managedTextures) if (t.userData?.disposable) { t.dispose(); managedTextures.delete(t); } };
+
+    const hemiLight = new THREE.HemisphereLight(0xffb570, 0x2c1914, 0.85);
+    scene.add(hemiLight);
+    const sunLight = new THREE.DirectionalLight(0xff944d, 1.35);
+    sunLight.position.set(-22, 26, 18);
+    sunLight.castShadow = true;
+    sunLight.shadow.mapSize.set(1024, 1024);
+    Object.assign(sunLight.shadow.camera, { near: 2, far: 75, left: -26, right: 26, top: 26, bottom: -26 });
+    sunLight.shadow.bias = -0.0008;
+    scene.add(sunLight);
+
+    [[0xffcf6b, 2.2, 18, 0, 4.5, -10.2], [0xff7b33, 1.5, 12, 0, 2.4, 8], [0xffa652, 1.4, 14, 12, 1.8, 5]].forEach(([c, i, d, x, y, z]) => {
+      const pl = new THREE.PointLight(c, i, d); pl.position.set(x, y, z); scene.add(pl);
+    });
+
+    const circleColliders = [], boxColliders = [];
+    const addCircleCol = (x, z, r) => circleColliders.push({ x, z, r });
+    const addBoxCol = (minX, maxX, minZ, maxZ) => boxColliders.push({ minX, maxX, minZ, maxZ });
+    const addMesh = (parent, geo, mat, x = 0, y = 0, z = 0, shadow = false) => {
+      const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z);
+      if (shadow) { m.castShadow = true; m.receiveShadow = true; }
+      parent.add(m); return m;
+    };
+
+    function createBrickTex() {
+      const c = document.createElement('canvas'); c.width = c.height = 256;
+      const ctx = c.getContext('2d'); ctx.fillStyle = '#7c3424'; ctx.fillRect(0, 0, 256, 256);
+      for (let r = 0; r < 8; r++) for (let col = -1; col <= 4; col++) {
+        const s = 115 + ((r * 7 + col * 13) % 24);
+        ctx.fillStyle = `rgb(${s},${Math.floor(s * 0.44)},${Math.floor(s * 0.31)})`;
+        ctx.fillRect(col * 64 + (r % 2) * 32 + 2, r * 32 + 2, 60, 28);
+      }
+      const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(22, 22);
+      return regTex(t);
+    }
+
+    function createSignTex(title, sub = '') {
+      const c = document.createElement('canvas'); c.width = 512; c.height = 160;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#3b150c'; ctx.fillRect(0, 0, 512, 160);
+      ctx.strokeStyle = '#f3c15a'; ctx.lineWidth = 10; ctx.strokeRect(8, 8, 496, 144);
+      ctx.fillStyle = '#ffe399'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = 'bold 42px "Segoe UI", sans-serif'; ctx.fillText(title, 256, sub ? 66 : 82);
+      if (sub) { ctx.fillStyle = '#f5c77e'; ctx.font = '600 22px "Segoe UI", sans-serif'; ctx.fillText(sub, 256, 114); }
+      return regTex(new THREE.CanvasTexture(c));
+    }
+
+    const MATS = {
+      brick: new MatS({ map: createBrickTex(), roughness: 0.88 }),
+      stone: new MatS({ color: 0x766c65, roughness: 0.85 }),
+      stoneLt: new MatS({ color: 0x9e9284, roughness: 0.8 }),
+      woodRed: new MatS({ color: 0x6e1f19, roughness: 0.65 }),
+      woodDark: new MatS({ color: 0x3b1f14, roughness: 0.75 }),
+      wallWarm: new MatS({ color: 0xc89d66, roughness: 0.82 }),
+      roofTile: new MatS({ color: 0xa62c1f, roughness: 0.6 }),
+      gold: new MatS({ color: 0xf4c459, metalness: 0.55, roughness: 0.32 }),
+      buddhaGold: new MatS({ color: 0xffcf66, emissive: 0x593608, emissiveIntensity: 0.45, metalness: 0.65, roughness: 0.28 }),
+      bronze: new MatS({ color: 0x6f5537, metalness: 0.65, roughness: 0.38 }),
+      lotusPink: new MatS({ color: 0xf48fb1, roughness: 0.5 }),
+      leafGreen: new MatS({ color: 0x3b6e38, roughness: 0.75 }),
+      leafWarm: new MatS({ color: 0x4f7d36, roughness: 0.75 }),
+      lanternRed: new MatS({ color: 0xe63929, emissive: 0xff5522, emissiveIntensity: 0.75, roughness: 0.4 }),
+      ribbonRed: new MatS({ color: 0xd92626, emissive: 0x6e0e0e, emissiveIntensity: 0.35, side: THREE.DoubleSide }),
+      water: new MatS({ color: 0x1e4d4b, roughness: 0.2, metalness: 0.3 })
+    };
+
+    function createCurvedRoof(w, d, h) {
+      const g = new Grp(), m = Math.max(w, d);
+      const geo = new Cone(m * 0.72, h, 4); geo.rotateY(Math.PI / 4);
+      const body = addMesh(g, geo, MATS.roofTile, 0, h * 0.5, 0, true);
+      body.scale.set(w / m, 1, d / m);
+      const eaveGeo = new Cone(0.28, 1.15, 5);
+      [[-w * 0.48, d * 0.48], [w * 0.48, d * 0.48], [-w * 0.48, -d * 0.48], [w * 0.48, -d * 0.48]].forEach(([cx, cz]) => {
+        const e = addMesh(g, eaveGeo, MATS.gold, cx, 0.32, cz);
+        e.rotation.set(cz > 0 ? 0.45 : -0.45, 0, cx > 0 ? -0.45 : 0.45);
+      });
+      return g;
+    }
+
+    // Sân lát gạch Bát Tràng & tường bao
+    const ground = addMesh(scene, new Plane(68, 68), MATS.brick, 0, 0, 0);
+    ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true;
+    addMesh(scene, new Box(5.2, 0.08, 30), MATS.stoneLt, 0, 0.04, 8, true);
+    addMesh(scene, new Box(0.8, 2.6, 52), MATS.wallWarm, -25, 1.3, 0);
+    addMesh(scene, new Box(0.8, 2.6, 52), MATS.wallWarm, 25, 1.3, 0);
+    addMesh(scene, new Box(50.8, 2.8, 0.8), MATS.wallWarm, 0, 1.4, -25);
+    addMesh(scene, new Box(17.5, 2.4, 0.8), MATS.wallWarm, -16.2, 1.2, 24);
+    addMesh(scene, new Box(17.5, 2.4, 0.8), MATS.wallWarm, 16.2, 1.2, 24);
+
+    // Cổng Tam Quan & biển "PHƯỚC LINH CỔ TỰ"
+    const gate = new Grp(); gate.position.set(0, 0, 24); scene.add(gate);
+    [-6.8, -2.5, 2.5, 6.8].forEach((px, i) => {
+      const h = (i === 1 || i === 2) ? 6.2 : 4.8;
+      addMesh(gate, new Cyl(0.38, 0.44, h, 10), MATS.woodRed, px, h / 2, 0, true);
+      addMesh(gate, new Cyl(0.55, 0.62, 0.5, 10), MATS.stone, px, 0.25, 0);
+      addCircleCol(px, 24, 0.72);
+    });
+    addMesh(gate, new Box(6.2, 0.75, 1.5), MATS.woodDark, 0, 5.6, 0);
+    [[0, 5.95, 7.4, 3.4, 1.9], [0, 7.35, 5.4, 2.6, 1.5], [-4.65, 4.6, 5.2, 2.8, 1.45], [4.65, 4.6, 5.2, 2.8, 1.45]].forEach(([x, y, w, d, h]) => {
+      const r = createCurvedRoof(w, d, h); r.position.set(x, y, 0); gate.add(r);
+    });
+    const signMat = new MatB({ map: createSignTex('PHƯỚC LINH CỔ TỰ', 'CỔNG TAM QUAN') });
+    addMesh(gate, new Plane(4.4, 1.35), signMat, 0, 5.55, 0.78);
+    const signBack = addMesh(gate, new Plane(4.4, 1.35), signMat, 0, 5.55, -0.78); signBack.rotation.y = Math.PI;
+
+    // Lư hương đồng lớn giữa sân
+    const burner = new Grp(); burner.position.set(0, 0, 8); scene.add(burner);
+    addMesh(burner, new Cyl(1.75, 1.95, 0.38, 16), MATS.stone, 0, 0.19, 0, true);
+    for (let i = 0; i < 4; i++) {
+      const a = (i * Math.PI) / 2 + Math.PI / 4;
+      addMesh(burner, new Cyl(0.18, 0.22, 0.9, 8), MATS.bronze, Math.cos(a) * 0.85, 0.75, Math.sin(a) * 0.85);
+    }
+    addMesh(burner, new Cyl(1.32, 1.05, 1.25, 18), MATS.bronze, 0, 1.55, 0, true);
+    const rim = addMesh(burner, new Torus(1.32, 0.12, 10, 24), MATS.gold, 0, 2.15, 0); rim.rotation.x = Math.PI / 2;
+    addMesh(burner, new Cyl(1.22, 1.22, 0.12, 16), MATS.stoneLt, 0, 2.08, 0);
+    [-1.48, 1.48].forEach(xo => addMesh(burner, new Torus(0.38, 0.08, 8, 16), MATS.gold, xo, 1.75, 0));
+    const playerIncenseGroup = new Grp(); playerIncenseGroup.position.y = 2.12; burner.add(playerIncenseGroup);
+    const activeBurningSticks = [];
+    function createIncenseStick(len = 0.85, isPlayer = false) {
+      const g = new Grp();
+      const stem = addMesh(g, new Cyl(0.018, 0.018, len, 6), new MatB({ color: 0xc92a2a }), 0, len / 2, 0);
+      const tip = addMesh(g, new Sph(isPlayer ? 0.045 : 0.03, 8, 8), new MatB({ color: 0xff5500 }), 0, len, 0);
+      if (isPlayer) activeBurningSticks.push({ stem, tip, len, burnProgress: 0 });
+      return g;
+    }
+    for (let i = 0; i < 16; i++) {
+      const st = createIncenseStick(0.7, false), r = Math.random() * 0.75, a = Math.random() * Math.PI * 2;
+      st.position.set(Math.cos(a) * r, 2.12, Math.sin(a) * r); burner.add(st);
+    }
+    function spawnPlayerIncense(cnt) {
+      while (playerIncenseGroup.children.length > 18) playerIncenseGroup.remove(playerIncenseGroup.children[0]);
+      for (let i = 0; i < cnt; i++) {
+        const st = createIncenseStick(0.95, true);
+        st.position.set((i - (cnt - 1) / 2) * 0.16, 0, 0.25 + Math.random() * 0.12);
+        playerIncenseGroup.add(st);
+      }
+    }
+    addCircleCol(0, 8, 1.95);
+
+    // Chính Điện mái cong ngói đỏ, Câu đối Quốc ngữ, Rồng đá & Pho Tượng Phật ngồi trang nghiêm
+    function createCoupletTex(words) {
+      const c = document.createElement('canvas'); c.width = 128; c.height = 640;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#7a1212'; ctx.fillRect(0, 0, 128, 640);
+      ctx.strokeStyle = '#f6c967'; ctx.lineWidth = 8; ctx.strokeRect(6, 6, 116, 628);
+      ctx.fillStyle = '#ffe599'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = 'bold 28px Georgia, "Times New Roman", serif';
+      const arr = words.split(' ');
+      const step = 560 / arr.length;
+      arr.forEach((w, i) => ctx.fillText(w, 64, 52 + i * step));
+      return regTex(new THREE.CanvasTexture(c));
+    }
+
+    const hall = new Grp(); hall.position.set(0, 0, -12.5); scene.add(hall);
+    addMesh(hall, new Box(19, 0.9, 13), MATS.stone, 0, 0.45, 0, true);
+    for (let s = 0; s < 3; s++) addMesh(hall, new Box(6.4, 0.3, 1.2), MATS.stoneLt, 0, 0.15 + s * 0.3, 6.9 - s * 0.45);
+    // Đôi rồng đá bậc thềm Chính Điện (cách điệu uốn lượn thời Lý - Trần)
+    [-3.35, 3.35].forEach(rx => {
+      const dg = new Grp(); dg.position.set(rx, 0.35, 6.5); hall.add(dg);
+      const body = addMesh(dg, new Box(0.42, 0.45, 2.2), MATS.stoneLt, 0, 0.2, 0, true); body.rotation.x = 0.32;
+      addMesh(dg, new Sph(0.32, 10, 10), MATS.stone, 0, 0.32, 0.95);
+      addMesh(dg, new Cone(0.18, 0.45, 6), MATS.gold, 0, 0.62, 0.95);
+    });
+    // Hai trụ Đèn Đá cổ chầu sân Chính Điện
+    [-5.2, 5.2].forEach(lx => {
+      const sl = new Grp(); sl.position.set(lx, 0, -4.2); scene.add(sl);
+      addMesh(sl, new Box(0.9, 0.3, 0.9), MATS.stone, 0, 0.15, 0);
+      addMesh(sl, new Cyl(0.22, 0.28, 1.5, 8), MATS.stoneLt, 0, 1.05, 0, true);
+      addMesh(sl, new Sph(0.25, 10, 10), MATS.lanternRed, 0, 1.95, 0);
+      const rf = createCurvedRoof(1.2, 1.2, 0.55); rf.position.set(0, 2.15, 0); sl.add(rf);
+      addCircleCol(lx, -4.2, 0.65);
+    });
+
+    [[-7.8,5.2],[-4.2,5.2],[4.2,5.2],[7.8,5.2],[-7.8,0],[-4.2,0],[4.2,0],[7.8,0],[-7.8,-5],[-4.2,-5],[0,-5],[4.2,-5],[7.8,-5]].forEach(([cx, cz]) => {
+      addMesh(hall, new Cyl(0.36, 0.42, 6.2, 10), MATS.woodRed, cx, 4, cz, true);
+    });
+    // Treo đôi câu đối chữ Quốc ngữ thư pháp trên cột tiền đường Chính Điện
+    const cpLeft1 = new MatB({ map: createCoupletTex('TỪ BI PHỔ ĐỘ MUÔN LOÀI') });
+    const cpRight1 = new MatB({ map: createCoupletTex('TRÍ TUỆ SOI ĐƯỜNG VẠN NẺO') });
+    const cpLeft2 = new MatB({ map: createCoupletTex('MÁI CHÙA CHE CHỞ HỒN DÂN TỘC') });
+    const cpRight2 = new MatB({ map: createCoupletTex('NẾP SỐNG MUÔN ĐỜI CỦA TỔ TÔNG') });
+    addMesh(hall, new Plane(0.62, 3.8), cpLeft1, -4.2, 3.9, 5.62);
+    addMesh(hall, new Plane(0.62, 3.8), cpRight1, 4.2, 3.9, 5.62);
+    addMesh(hall, new Plane(0.62, 3.8), cpLeft2, -7.8, 3.9, 5.62);
+    addMesh(hall, new Plane(0.62, 3.8), cpRight2, 7.8, 3.9, 5.62);
+
+    addMesh(hall, new Box(16.2, 6, 0.5), MATS.wallWarm, 0, 3.9, -5.1);
+    addMesh(hall, new Box(0.5, 6, 10.4), MATS.wallWarm, -7.9, 3.9, 0);
+    addMesh(hall, new Box(0.5, 6, 10.4), MATS.wallWarm, 7.9, 3.9, 0);
+    const rLow = createCurvedRoof(21.5, 15.5, 3.2); rLow.position.set(0, 6.8, 0); hall.add(rLow);
+    const rUp = createCurvedRoof(15.5, 11.2, 2.7); rUp.position.set(0, 9.2, 0); hall.add(rUp);
+    // Chuông gió (Phong linh đồng) ở 4 góc đao mái chùa
+    const windChimes = [];
+    [[-10.2, 6.6, 7.2], [10.2, 6.6, 7.2], [-10.2, 6.6, -7.2], [10.2, 6.6, -7.2]].forEach(([wx, wy, wz]) => {
+      const wc = addMesh(hall, new Cone(0.18, 0.42, 8), MATS.gold, wx, wy, wz);
+      windChimes.push(wc);
+    });
+    addMesh(hall, new Plane(5.2, 1.45), new MatB({ map: createSignTex('ĐẠI HÙNG BẢO ĐIỆN', 'CHÍNH ĐIỆN') }), 0, 6.55, 5.65);
+
+    // Bảo Tòa & Tôn Tượng "TỰ TẠI PHẬT" trong Chánh Điện (dáng ngồi Tự Tại ung dung, trang nghiêm)
+    const statue = new Grp(); statue.position.set(0, 0.9, -1.8); hall.add(statue);
+    // Bức hoành phi thờ "TỰ TẠI PHẬT" phía trên khám thờ trong Chánh Điện
+    addMesh(statue, new Plane(3.8, 1.05), new MatB({ map: createSignTex('TỰ TẠI PHẬT', 'QUÁN TÂM TỰ TẠI') }), 0, 5.55, 0.2);
+    // Bệ thờ gỗ son thếp vàng & Tảng Bảo Thạch Tự Tại
+    addMesh(statue, new Box(4.8, 1.35, 3.6), MATS.woodRed, 0, 0.68, 0, true);
+    addMesh(statue, new Box(4.95, 0.14, 3.75), MATS.gold, 0, 1.36, 0);
+    // Đài sen báu 2 tầng (cánh sen hồng & kim liên)
+    addMesh(statue, new Cyl(1.68, 1.35, 0.58, 18), MATS.lotusPink, 0, 1.68, 0, true);
+    for (let p = 0; p < 16; p++) {
+      const a = (p / 16) * Math.PI * 2;
+      const pet = addMesh(statue, new Cone(0.36, 0.75, 5), p % 2 === 0 ? MATS.lotusPink : MATS.gold, Math.cos(a) * 1.54, 1.78, Math.sin(a) * 1.54);
+      pet.rotation.set(Math.sin(a) * 0.38, 0, -Math.cos(a) * 0.38);
+    }
+    // Đóa sen nhỏ phụ nâng bàn chân trái buông thư (đặc trưng thế ngồi Tự Tại)
+    addMesh(statue, new Cyl(0.42, 0.3, 0.25, 12), MATS.lotusPink, -0.55, 1.38, 1.38);
+    // Tư thế chân Tự Tại: Chân trái xếp/buông nhẹ xuống đài sen phụ, Chân phải co gối Tự Tại
+    const leftThigh = addMesh(statue, new Cyl(0.24, 0.22, 1.05, 12), MATS.buddhaGold, -0.42, 2.02, 0.52);
+    leftThigh.rotation.set(0.65, 0.25, 0.35);
+    const leftCalf = addMesh(statue, new Cyl(0.19, 0.17, 0.85, 12), MATS.buddhaGold, -0.54, 1.68, 1.08);
+    leftCalf.rotation.set(0.28, 0, 0.08);
+    // Chân phải chống gối Tự Tại (Royal Ease)
+    const rightKnee = addMesh(statue, new Cyl(0.26, 0.23, 1.05, 12), MATS.buddhaGold, 0.52, 2.48, 0.55);
+    rightKnee.rotation.set(-0.42, -0.2, -0.28);
+    addMesh(statue, new Sph(0.27, 12, 12), MATS.buddhaGold, 0.56, 2.86, 0.72);
+    // Thân mình Tự Tại Phật & Dải thiên y rủ mềm
+    addMesh(statue, new Cyl(1.18, 1.38, 0.48, 14), MATS.buddhaGold, 0, 2.08, 0);
+    const bodyCore = addMesh(statue, new Cyl(0.66, 0.96, 1.68, 14), MATS.buddhaGold, 0, 3.12, -0.05, true);
+    bodyCore.rotation.z = -0.04;
+    const sh = addMesh(statue, new Sph(0.86, 14, 10), MATS.buddhaGold, 0, 3.84, -0.05); sh.scale.set(1.28, 0.55, 0.78);
+    // Dải lụa thiên y vắt qua vai và rủ xuống đài sen
+    const sash = addMesh(statue, new Box(0.28, 1.45, 0.12), MATS.gold, 0, 1.75, 1.28); sash.rotation.x = -0.28;
+    // Tay phải đặt ung dung lên đầu gối phải (thủ ấn Tự Tại), tay trái chống nhẹ lên đài sen
+    const rArm = addMesh(statue, new Cyl(0.17, 0.15, 1.18, 10), MATS.buddhaGold, 0.62, 3.22, 0.42);
+    rArm.rotation.set(0.78, 0, -0.22);
+    addMesh(statue, new Sph(0.18, 10, 10), MATS.buddhaGold, 0.64, 2.88, 0.92);
+    const lArm = addMesh(statue, new Cyl(0.17, 0.15, 1.25, 10), MATS.buddhaGold, -0.78, 2.82, 0.12);
+    lArm.rotation.set(0.15, 0, 0.26);
+    // Diện tượng Tự Tại Phật từ hòa, Bạch hào giữa trán & Bảo quan Hoa Sen
+    addMesh(statue, new Sph(0.58, 18, 18), MATS.buddhaGold, 0, 4.56, 0);
+    // Đôi tai dài phúc tướng
+    [-0.55, 0.55].forEach(ex => {
+      const ear = addMesh(statue, new Sph(0.14, 10, 10), MATS.buddhaGold, ex, 4.46, 0.05);
+      ear.scale.set(0.65, 1.85, 0.75);
+    });
+    // Bạch hào ngọc sáng giữa trán
+    addMesh(statue, new Sph(0.065, 10, 10), new MatB({ color: 0xfff9db }), 0, 4.68, 0.55);
+    // Nhục kế & Mão báu Kim Liên trên đỉnh đầu
+    addMesh(statue, new Sph(0.28, 14, 14), MATS.buddhaGold, 0, 5.12, -0.02);
+    addMesh(statue, new Cyl(0.36, 0.44, 0.28, 12), MATS.gold, 0, 4.98, 0.08);
+    // Nguyệt Luân Tự Tại (vầng trăng tròn lớn phía sau) & Hào quang kép
+    addMesh(statue, new THREE.CircleGeometry(2.15, 36), new MatB({ color: 0xfff1b8, side: THREE.DoubleSide, transparent: true, opacity: 0.22 }), 0, 3.75, -0.88);
+    const buddhaHalo = addMesh(statue, new Ring(1.38, 1.95, 36), new MatB({ color: 0xffe28a, side: THREE.DoubleSide, transparent: true, opacity: 0.82 }), 0, 3.85, -0.75);
+    const buddhaHaloOuter = addMesh(statue, new Ring(2.0, 2.55, 36), new MatB({ color: 0xffb74d, side: THREE.DoubleSide, transparent: true, opacity: 0.32 }), 0, 3.85, -0.82);
+    // Đôi Bình Ngọc Cắm Hoa Sen Vàng & Đèn Lưu Ly chầu hai bên Bảo Tòa Tự Tại Phật
+    [-1.85, 1.85].forEach(vx => {
+      addMesh(statue, new Cyl(0.18, 0.24, 0.65, 10), MATS.stoneLt, vx, 1.72, 0.95);
+      addMesh(statue, new Cone(0.22, 0.38, 7), MATS.gold, vx, 2.22, 0.95);
+      addMesh(statue, new Sph(0.14, 10, 10), MATS.lanternRed, vx * 0.72, 1.58, 1.25);
+    });
+    let resonanceBoost = 0;
+    addBoxCol(-8.5, 8.5, -18.5, -11.2); addBoxCol(-8.5, -7.2, -18.5, -6.8); addBoxCol(7.2, 8.5, -18.5, -6.8);
+
+    // Bàn Gõ Mõ & Bàn Xin Quẻ
+    const moGroup = new Grp(); moGroup.position.set(-4.2, 0.9, -8.2); scene.add(moGroup);
+    addMesh(moGroup, new Box(1.6, 0.75, 1.1), MATS.woodDark, 0, 0.38, 0);
+    const woodenFishMesh = addMesh(moGroup, new Sph(0.32, 12, 12), MATS.woodRed, 0, 0.95, 0); woodenFishMesh.scale.set(1.2, 0.85, 1);
+    addCircleCol(-4.2, -8.2, 1.05);
+
+    const xamGroup = new Grp(); xamGroup.position.set(4.2, 0.9, -8.2); scene.add(xamGroup);
+    addMesh(xamGroup, new Box(1.6, 0.75, 1.1), MATS.woodDark, 0, 0.38, 0);
+    const fortuneCylinderMesh = new Grp(); fortuneCylinderMesh.position.set(0, 0.98, 0); xamGroup.add(fortuneCylinderMesh);
+    addMesh(fortuneCylinderMesh, new Cyl(0.22, 0.2, 0.55, 12), MATS.woodRed, 0, 0, 0);
+    for (let i = 0; i < 8; i++) addMesh(fortuneCylinderMesh, new Box(0.035, 0.45, 0.015), MATS.gold, Math.cos(i) * 0.08, 0.2, Math.sin(i) * 0.08);
+    addCircleCol(4.2, -8.2, 1.05);
+
+    // Gác Chuông & Quả Chuông Đồng
+    const tower = new Grp(); tower.position.set(-12.5, 0, -5.5); scene.add(tower);
+    addMesh(tower, new Box(5.6, 0.9, 5.6), MATS.stone, 0, 0.45, 0, true);
+    [[-2.1,-2.1],[2.1,-2.1],[-2.1,2.1],[2.1,2.1]].forEach(([cx, cz]) => addMesh(tower, new Cyl(0.28, 0.34, 5.2, 10), MATS.woodRed, cx, 3.5, cz, true));
+    const tr1 = createCurvedRoof(6.8, 6.8, 2); tr1.position.set(0, 5.8, 0); tower.add(tr1);
+    const tr2 = createCurvedRoof(4.8, 4.8, 1.7); tr2.position.set(0, 7.4, 0); tower.add(tr2);
+    const bellMesh = new Grp(); bellMesh.position.set(0, 4.9, 0); tower.add(bellMesh);
+    addMesh(bellMesh, new Cyl(0.55, 0.92, 1.85, 16), MATS.bronze, 0, -1.1, 0, true);
+    const bellStriker = addMesh(tower, new Cyl(0.14, 0.14, 1.8, 8), MATS.woodDark, 1.45, 3.2, 0); bellStriker.rotation.z = Math.PI / 2;
+    const bellWaveRing = addMesh(tower, new Ring(0.8, 1.15, 32), new MatB({ color: 0xffdf7a, side: THREE.DoubleSide, transparent: true, opacity: 0 }), 0, 1.2, 0);
+    bellWaveRing.rotation.x = -Math.PI / 2;
+    let bellSwingPhase = 0, bellWaveScale = 0;
+    addCircleCol(-12.5, -5.5, 2.8);
+
+    // Cây Bồ Đề lớn, Dải lụa đỏ & Bàn Trà Đá Thiền Hơi Thở
+    const tree = new Grp(); tree.position.set(-12.5, 0, 7.5); scene.add(tree);
+    addMesh(tree, new Cyl(2.8, 3.1, 0.55, 16), MATS.stone, 0, 0.27, 0);
+    addMesh(tree, new Cyl(0.95, 1.55, 4.6, 10), MATS.woodDark, 0, 2.5, 0, true);
+    [[0,6.2,0,3.6],[-2.4,5.2,1.2,2.6],[2.4,5.3,1,2.6],[-1.8,5.5,-2,2.5],[1.9,5.4,-1.8,2.5],[0,7.8,0,2.7],[0.4,4.9,2.4,2.3]].forEach(([cx,cy,cz,r], i) => {
+      addMesh(tree, new THREE.DodecahedronGeometry(r, 1), i % 2 === 0 ? MATS.leafGreen : MATS.leafWarm, cx, cy, cz, true);
+    });
+    const bodhiRibbonsGroup = new Grp(); tree.add(bodhiRibbonsGroup);
+    function spawnRibbonOnBodhiTree(highlight = false) {
+      const a = Math.random() * Math.PI * 2, r = 1.6 + Math.random() * 2.3;
+      const rb = addMesh(bodhiRibbonsGroup, new Plane(0.18, 0.95), highlight ? new MatB({ color: 0xffeb7a, side: THREE.DoubleSide }) : MATS.ribbonRed, Math.cos(a) * r, 3.2 + Math.random() * 1.4, Math.sin(a) * r);
+      rb.userData = { phase: Math.random() * Math.PI * 2 };
+      if (highlight) setTimeout(() => { rb.material = MATS.ribbonRed; }, 4500);
+    }
+    for (let i = 0; i < 28 + saveData.wishes.filter(w => w.type === 'ribbon').length; i++) spawnRibbonOnBodhiTree(false);
+    addCircleCol(-12.5, 7.5, 2.9);
+
+    // Bàn trà đá Thiền dưới tán Bồ Đề
+    const teaGroup = new Grp(); teaGroup.position.set(-8.8, 0, 11.8); scene.add(teaGroup);
+    addMesh(teaGroup, new Cyl(0.85, 0.65, 0.62, 12), MATS.stoneLt, 0, 0.31, 0, true);
+    addMesh(teaGroup, new Sph(0.16, 10, 10), MATS.bronze, 0, 0.72, 0);
+    [[-1.1, 0], [1.1, 0], [0, 1.1]].forEach(([sx, sz]) => addMesh(teaGroup, new Cyl(0.32, 0.28, 0.36, 10), MATS.stone, sx, 0.18, sz));
+    addCircleCol(-8.8, 11.8, 1.15);
+
+    // Chiếu Ông Đồ Thư Pháp đầu xuân (bên hiên Đông)
+    const ongDoGroup = new Grp(); ongDoGroup.position.set(11.5, 0, -4.5); scene.add(ongDoGroup);
+    addMesh(ongDoGroup, new Box(3.6, 0.12, 2.8), MATS.woodRed, 0, 0.06, 0);
+    addMesh(ongDoGroup, new Box(2.2, 0.55, 1.1), MATS.woodDark, 0, 0.34, 0, true);
+    // Giấy đỏ & nghiên mực trên bàn Ông Đồ
+    addMesh(ongDoGroup, new Plane(0.55, 0.85), MATS.ribbonRed, -0.35, 0.63, 0.1).rotation.x = -Math.PI / 2;
+    addMesh(ongDoGroup, new Box(0.28, 0.06, 0.2), MATS.stone, 0.45, 0.64, 0);
+    // Tượng Ông Đồ ngồi khăn đóng áo dài đỏ
+    addMesh(ongDoGroup, new Cyl(0.24, 0.34, 0.75, 10), MATS.ribbonRed, 0, 0.45, -0.85, true);
+    addMesh(ongDoGroup, new Sph(0.26, 12, 12), new MatS({ color: 0xffdfc4 }), 0, 1.02, -0.85);
+    addMesh(ongDoGroup, new Cyl(0.27, 0.27, 0.16, 12), MATS.woodDark, 0, 1.18, -0.85);
+    addMesh(ongDoGroup, new Cone(0.12, 0.38, 6), new MatB({ color: 0xf2f2f2 }), 0, 0.78, -0.62).rotation.x = Math.PI;
+    // Khung treo liễn thư pháp đỏ
+    [-1.4, 1.4].forEach(px => addMesh(ongDoGroup, new Cyl(0.08, 0.08, 2.8, 8), MATS.woodDark, px, 1.4, -1.1));
+    addMesh(ongDoGroup, new Cyl(0.07, 0.07, 3.1, 8), MATS.woodDark, 0, 2.7, -1.1).rotation.z = Math.PI / 2;
+    [-0.85, 0, 0.85].forEach(sx => addMesh(ongDoGroup, new Plane(0.42, 1.15), MATS.ribbonRed, sx, 2.0, -1.1));
+    addCircleCol(11.5, -4.5, 1.85);
+
+    // Hồ Sen nhỏ, Đài Quan Âm giữa hồ, Đàn Cá Koi (InstancedMesh) & Đèn hoa đăng trôi
+    const pondGroup = new Grp(); pondGroup.position.set(12.2, 0, 5.5); scene.add(pondGroup);
+    addMesh(pondGroup, new Cyl(5.2, 5.4, 0.52, 24), MATS.stone, 0, 0.26, 0);
+    addMesh(pondGroup, new Cyl(4.75, 4.75, 0.42, 24), MATS.water, 0, 0.22, 0);
+    // Đài Quan Âm uy nghiêm giữa hồ sen
+    const quanAm = new Grp(); quanAm.position.set(0, 0.42, 0); pondGroup.add(quanAm);
+    addMesh(quanAm, new Cyl(0.85, 1.05, 0.85, 12), MATS.stoneLt, 0, 0.42, 0, true);
+    addMesh(quanAm, new Cyl(0.72, 0.55, 0.35, 14), MATS.lotusPink, 0, 0.98, 0);
+    const whiteJadeMat = new MatS({ color: 0xfffdf7, emissive: 0x4a3b22, emissiveIntensity: 0.25, roughness: 0.3 });
+    addMesh(quanAm, new Cyl(0.22, 0.36, 1.35, 12), whiteJadeMat, 0, 1.75, 0, true);
+    addMesh(quanAm, new Sph(0.22, 12, 12), whiteJadeMat, 0, 2.58, 0);
+    addMesh(quanAm, new Ring(0.48, 0.68, 24), new MatB({ color: 0xffe599, side: THREE.DoubleSide, transparent: true, opacity: 0.75 }), 0, 2.55, -0.25);
+
+    // Đàn cá Koi 16 con bơi lượn dưới mặt hồ bằng InstancedMesh
+    const KOI_COUNT = 16, koiDummy = new THREE.Object3D();
+    const koiGeo = new Cone(0.09, 0.38, 6); koiGeo.rotateX(Math.PI / 2);
+    const koiInst = new THREE.InstancedMesh(koiGeo, new MatS({ color: 0xffffff, roughness: 0.3 }), KOI_COUNT);
+    pondGroup.add(koiInst);
+    const koiList = [];
+    for (let i = 0; i < KOI_COUNT; i++) {
+      koiList.push({ a: (i / KOI_COUNT) * Math.PI * 2, r: 1.35 + (i % 4) * 0.72, spd: 0.45 + (i % 3) * 0.18, dir: i % 2 === 0 ? 1 : -1 });
+      koiInst.setColorAt(i, new Col(i % 2 === 0 ? 0xff5722 : 0xffca28));
+    }
+    koiInst.instanceColor.needsUpdate = true;
+
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2, r = 1.45 + (i % 3) * 0.98;
+      addMesh(pondGroup, new Cyl(0.45, 0.45, 0.03, 12), MATS.leafGreen, Math.cos(a) * r, 0.45, Math.sin(a) * r);
+      if (i % 2 === 0) addMesh(pondGroup, new Cone(0.22, 0.32, 7), MATS.lotusPink, Math.cos(a) * r, 0.58, Math.sin(a) * r);
+    }
+    const floatingLanterns = [];
+    function spawnFloatingLantern(isNew = false) {
+      const lg = new Grp(), r = isNew ? 2.1 : (1.3 + Math.random() * 2.8), a = Math.random() * Math.PI * 2;
+      addMesh(lg, new Cyl(0.24, 0.16, 0.1, 8), MATS.lotusPink, 0, 0, 0);
+      addMesh(lg, new Sph(0.13, 8, 8), new MatB({ color: isNew ? 0xffffff : 0xffd269 }), 0, 0.1, 0);
+      lg.position.set(Math.cos(a) * r, 0.48, Math.sin(a) * r); pondGroup.add(lg);
+      floatingLanterns.push({ mesh: lg, angle: a, radius: r, speed: 0.12 + Math.random() * 0.15, bobOffset: Math.random() * Math.PI * 2 });
+    }
+    for (let i = 0; i < 14 + saveData.wishes.filter(w => w.type === 'lantern').length; i++) spawnFloatingLantern(false);
+    addCircleCol(12.2, 5.5, 5.25);
+
+    // Hàng đèn lồng đỏ
+    [[-3.2,18],[3.2,18],[-3.2,12],[3.2,12],[-3.2,4],[3.2,4],[-3.2,-2],[3.2,-2],[-7.5,-5.5],[7.5,-5.5]].forEach(([lx, lz]) => {
+      addMesh(scene, new Cyl(0.07, 0.09, 3.6, 8), MATS.woodDark, lx, 1.8, lz);
+      const l = addMesh(scene, new Sph(0.28, 10, 10), MATS.lanternRed, lx + (lx < 0 ? 0.35 : -0.35), 3.25, lz);
+      l.scale.set(0.85, 1.15, 0.85);
+    });
+
+    // Hệ thống Hạt: Khói hương, Đom đóm, Cánh hoa rơi & Mưa xuân (cấp phát 1 lần)
+    function makeParticles(cnt, color, size, opacity, initFn) {
+      const geo = new THREE.BufferGeometry(), arr = new Float32Array(cnt * 3);
+      for (let i = 0; i < cnt; i++) initFn(arr, i * 3);
+      geo.setAttribute('position', new THREE.BufferAttribute(arr, 3));
+      const mat = new THREE.PointsMaterial({ color, size, transparent: true, opacity, depthWrite: false });
+      const pts = new THREE.Points(geo, mat); scene.add(pts);
+      return { geo, mat, cnt, pts };
+    }
+    const smokeP = makeParticles(55, 0xe8dfd5, 0.42, 0.34, (a, j) => { a[j] = (Math.random() - 0.5) * 0.8; a[j+1] = 2.2 + Math.random() * 4.5; a[j+2] = 8 + (Math.random() - 0.5) * 0.8; });
+    const fireflyP = makeParticles(65, 0xffe866, 0.24, 0.85, (a, j) => { a[j] = (Math.random() - 0.5) * 38; a[j+1] = 0.6 + Math.random() * 4.5; a[j+2] = (Math.random() - 0.5) * 36; });
+    const petalP = makeParticles(60, 0xffb3c6, 0.2, 0.78, (a, j) => { a[j] = (Math.random() - 0.5) * 34; a[j+1] = Math.random() * 9; a[j+2] = (Math.random() - 0.5) * 34; });
+    const rainP = makeParticles(95, 0xdbeeff, 0.13, 0.0, (a, j) => { a[j] = (Math.random() - 0.5) * 42; a[j+1] = Math.random() * 14; a[j+2] = (Math.random() - 0.5) * 42; });
+
+    /* === 4. NHÂN VẬT CHIBI (TÙY CHỌN 4 TRANG PHỤC TRUYỀN THỐNG), ĐIỀU KHIỂN & VA CHẠM === */
+    const OUTFIT_DEFS = {
+      lam: { name: 'Áo Lam Phật Tử', robe: 0x6b889c, pants: 0x496172 },
+      aodai_do: { name: 'Áo Dài Đỏ Xuân', robe: 0xc62828, pants: 0xfdf5e6 },
+      aotac_vang: { name: 'Áo Tấc Hoàng Kim', robe: 0xd99b26, pants: 0x6e1f19 },
+      nausong: { name: 'Áo Nâu Sồng', robe: 0x6d4c3d, pants: 0x3e2723 }
+    };
+    const player = { group: new Grp(), x: 0, z: 18.5, rotY: Math.PI, speed: 5.4, bowTimer: 0, walkCycle: 0, pose: 'stand', robeMat: null, pantsMat: null };
+    {
+      player.robeMat = new MatS({ color: 0x6b889c, roughness: 0.7 });
+      player.pantsMat = new MatS({ color: 0x496172, roughness: 0.75 });
+      const skin = new MatS({ color: 0xffdfc4, roughness: 0.65 });
+      const hair = new MatS({ color: 0x221a16, roughness: 0.8 });
+      player.leftLeg = addMesh(player.group, new Cyl(0.11, 0.1, 0.45, 8), player.pantsMat, -0.14, 0.22, 0);
+      player.rightLeg = addMesh(player.group, new Cyl(0.11, 0.1, 0.45, 8), player.pantsMat, 0.14, 0.22, 0);
+      player.torso = addMesh(player.group, new Cyl(0.24, 0.34, 0.72, 12), player.robeMat, 0, 0.74, 0, true);
+      player.leftArm = addMesh(player.group, new Cyl(0.08, 0.09, 0.48, 8), player.robeMat, -0.31, 0.78, 0);
+      player.rightArm = addMesh(player.group, new Cyl(0.08, 0.09, 0.48, 8), player.robeMat, 0.31, 0.78, 0);
+      player.head = addMesh(player.group, new Sph(0.33, 14, 14), skin, 0, 1.36, 0, true);
+      addMesh(player.group, new Sph(0.345, 14, 12, 0, Math.PI * 2, 0, Math.PI * 0.58), hair, 0, 1.38, 0);
+      addMesh(player.group, new Sph(0.13, 10, 10), hair, 0, 1.65, -0.18);
+      scene.add(player.group);
+    }
+    function setPlayerOutfit(key) {
+      const def = OUTFIT_DEFS[key] || OUTFIT_DEFS.lam;
+      saveData.outfit = key in OUTFIT_DEFS ? key : 'lam';
+      player.robeMat.color.setHex(def.robe);
+      player.pantsMat.color.setHex(def.pants);
+      saveGameData();
+    }
+    setPlayerOutfit(saveData.outfit);
+
+    function resolveCollisions(nx, nz, rad = 0.48) {
+      let x = Math.max(-23.6, Math.min(23.6, nx)), z = Math.max(-23.6, Math.min(22.9, nz));
+      for (const c of circleColliders) {
+        const dx = x - c.x, dz = z - c.z, dist = Math.hypot(dx, dz), minD = c.r + rad;
+        if (dist < minD && dist > 0.0001) { x = c.x + (dx / dist) * minD; z = c.z + (dz / dist) * minD; }
+      }
+      for (const b of boxColliders) {
+        const x0 = b.minX - rad, x1 = b.maxX + rad, z0 = b.minZ - rad, z1 = b.maxZ + rad;
+        if (x > x0 && x < x1 && z > z0 && z < z1) {
+          const dl = x - x0, dr = x1 - x, dt = z - z0, db = z1 - z, m = Math.min(dl, dr, dt, db);
+          if (m === dl) x = x0; else if (m === dr) x = x1; else if (m === dt) z = z0; else z = z1;
+        }
+      }
+      return { x, z };
+    }
+
+    const keys = {};
+    window.addEventListener('keydown', e => { keys[e.code] = true; });
+    window.addEventListener('keyup', e => { keys[e.code] = false; });
+
+    const joyState = { active: false, id: null, dx: 0, dy: 0, ox: 0, oy: 0 };
+    const joyZone = document.getElementById('joystick-zone'), joyKnob = document.getElementById('joystick-knob');
+    const moveKnob = (cx, cy) => {
+      let vx = cx - joyState.ox, vy = cy - joyState.oy, d = Math.hypot(vx, vy);
+      if (d > 40) { vx = (vx / d) * 40; vy = (vy / d) * 40; }
+      joyState.dx = vx / 40; joyState.dy = vy / 40;
+      joyKnob.style.transform = `translate(${vx.toFixed(1)}px,${vy.toFixed(1)}px)`;
+    };
+    joyZone.addEventListener('pointerdown', e => {
+      e.stopPropagation(); joyZone.setPointerCapture(e.pointerId);
+      const r = joyZone.getBoundingClientRect();
+      Object.assign(joyState, { active: true, id: e.pointerId, ox: r.left + r.width / 2, oy: r.top + r.height / 2 });
+      moveKnob(e.clientX, e.clientY);
+    });
+    joyZone.addEventListener('pointermove', e => { if (joyState.active && e.pointerId === joyState.id) moveKnob(e.clientX, e.clientY); });
+    const resetJoy = e => { if (joyState.active && (!e || e.pointerId === joyState.id)) { joyState.active = false; joyState.dx = joyState.dy = 0; joyKnob.style.transform = 'translate(0,0)'; } };
+    joyZone.addEventListener('pointerup', resetJoy); joyZone.addEventListener('pointercancel', resetJoy);
+
+    let camYaw = 0, camPitch = 0.42, camFocusTarget = null;
+    const dragCam = { active: false, id: null, lx: 0, ly: 0 };
+    canvas.addEventListener('pointerdown', e => Object.assign(dragCam, { active: true, id: e.pointerId, lx: e.clientX, ly: e.clientY }));
+    window.addEventListener('pointermove', e => {
+      if (!dragCam.active || e.pointerId !== dragCam.id) return;
+      camYaw -= (e.clientX - dragCam.lx) * 0.0065;
+      camPitch = Math.max(0.18, Math.min(0.85, camPitch + (e.clientY - dragCam.ly) * 0.0045));
+      dragCam.lx = e.clientX; dragCam.ly = e.clientY;
+    });
+    window.addEventListener('pointerup', e => { if (e.pointerId === dragCam.id) dragCam.active = false; });
+
+    /* === 5. KHÁCH HÀNH HƯƠNG AI (45 NGƯỜI BẰNG INSTANCEDMESH) & BONG BÓNG CHỮ === */
+    const AI_COUNT = 45, aiDummy = new THREE.Object3D();
+    const aiBodyInst = new THREE.InstancedMesh(new Cyl(0.22, 0.31, 0.75, 10), new MatS({ color: 0xffffff, roughness: 0.75 }), AI_COUNT);
+    const aiHeadInst = new THREE.InstancedMesh(new Sph(0.28, 10, 10), new MatS({ color: 0xffdfc4, roughness: 0.65 }), AI_COUNT);
+    const aiHairInst = new THREE.InstancedMesh(new Sph(0.29, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.55), new MatS({ color: 0xffffff, roughness: 0.8 }), AI_COUNT);
+    aiBodyInst.castShadow = true; scene.add(aiBodyInst, aiHeadInst, aiHairInst);
+
+    const SHIRT_COLORS = [0xc94a4a, 0xd98a3c, 0x4c8061, 0x5c7893, 0x8f5b8a, 0xd4af37, 0x7b8c56, 0xb85d43, 0x6d7986, 0xa84253];
+    const AI_QUOTES = ["Cầu cho mẹ khoẻ", "Mong thi đậu", "Bình an cả nhà", "Nam mô A Di Đà Phật", "Cầu năm mới thuận hòa", "Chùa chiều thanh tịnh quá", "Mong ông bà sống lâu", "Tâm an vạn sự an"];
+    const aiAgents = [];
+
+    for (let i = 0; i < AI_COUNT; i++) {
+      const role = i % 5 === 0 ? 'elder' : (i % 6 === 0 ? 'child' : 'adult');
+      const scale = role === 'child' ? 0.68 : (role === 'elder' ? 0.92 : 1.0);
+      let behavior = 'walk', x = (Math.random() - 0.5) * 26, z = -3 + Math.random() * 22;
+      if (i < 7) { behavior = 'chant'; x = -3.2 + (i % 4) * 2.1; z = -10.2 - Math.floor(i / 4) * 1.4; }
+      else if (i < 14) { behavior = 'pray'; x = -3.6 + (i - 7) * 1.2; z = 4.5 + (Math.random() - 0.5) * 2; }
+      else if (i < 19) { behavior = 'photo'; x = i % 2 === 0 ? 7.5 : -8.5; z = 5 + (Math.random() - 0.5) * 4; }
+      else { const c = resolveCollisions(x, z, 0.55); x = c.x; z = c.z; }
+      aiAgents.push({ role, scale, behavior, x, z, tx: (Math.random() - 0.5) * 24, tz: -3 + Math.random() * 22, rotY: Math.random() * 6.28, speed: role === 'elder' ? 1.15 : (role === 'child' ? 2.1 : 1.55), wait: Math.random() * 3, phase: Math.random() * 6.28 });
+      aiBodyInst.setColorAt(i, new Col(SHIRT_COLORS[i % SHIRT_COLORS.length]));
+      aiHairInst.setColorAt(i, new Col(role === 'elder' ? 0xd9d9d9 : 0x241a14));
+    }
+    aiBodyInst.instanceColor.needsUpdate = aiHairInst.instanceColor.needsUpdate = true;
+
+    const bubblesLayer = document.getElementById('bubbles-layer'), activeBubbles = [];
+    for (let b = 0; b < 4; b++) {
+      const el = document.createElement('div'); el.className = 'ai-bubble'; el.style.opacity = '0';
+      bubblesLayer.appendChild(el);
+      activeBubbles.push({ el, idx: (b * 9) % AI_COUNT, timer: b * 1.6 });
+    }
+
+    let visitorCount = saveData.visitorBase + Math.floor(Math.random() * 35);
+    const visitorEl = document.getElementById('visitor-count-el');
+    const syncVisitors = () => { visitorEl.textContent = visitorCount.toLocaleString('vi-VN'); };
+    syncVisitors();
+
+    setInterval(() => {
+      for (let i = 19, m = 0; i < AI_COUNT && m < 12; i++, m++) {
+        Object.assign(aiAgents[i], { x: -3 + (m % 4) * 2, z: 21.5 + Math.floor(m / 4), tx: (Math.random() - 0.5) * 14, tz: 6 + Math.random() * 8, wait: 0 });
+      }
+      visitorCount += 12; saveData.visitorBase = visitorCount; syncVisitors();
+      const tb = document.getElementById('toast-banner'); tb.classList.add('show');
+      setTimeout(() => tb.classList.remove('show'), 4000);
+    }, 38000);
+
+    /* === 6. CÁC HOẠT ĐỘNG CẦU AN (THẮP HƯƠNG, THỈNH CHUÔNG, GÕ MÕ, CẦU AN, XIN QUẺ) === */
+    const ZONES = [
+      { id: 'incense', name: 'Lư Hương Đồng', btn: '🙏 Thắp hương cầu an', x: 0, z: 10.6, r: 3.2 },
+      { id: 'bell', name: 'Gác Chuông Đồng', btn: '🔔 Thỉnh chuông chùa', x: -9.5, z: -5.5, r: 3.4 },
+      { id: 'mo', name: 'Bàn Gõ Mõ Tụng Kinh', btn: '🪵 Gõ mõ tĩnh tâm', x: -4.2, z: -6.2, r: 2.9 },
+      { id: 'wish_tree', name: 'Cây Bồ Đề Ước Nguyện', btn: '🎀 Viết lời cầu an', x: -9.2, z: 7.5, r: 3.5 },
+      { id: 'wish_pond', name: 'Đài Quan Âm & Hồ Sen', btn: '🪷 Thả hoa đăng cầu an', x: 6.6, z: 5.5, r: 3.5 },
+      { id: 'fortune', name: 'Bàn Xin Quẻ Đầu Năm', btn: '🎋 Xin quẻ đầu năm', x: 4.2, z: -6.2, r: 2.9 },
+      { id: 'tutai', name: 'Bảo Tòa Tự Tại Phật', btn: '🪷 Chiêm bái Tự Tại Phật', x: 0, z: -6.2, r: 2.7 },
+      { id: 'calligraphy', name: 'Chiếu Ông Đồ Thư Pháp', btn: '🖌️ Xin chữ Ông Đồ', x: 9.2, z: -4.5, r: 3.2 },
+      { id: 'meditate', name: 'Bàn Trà Thiền Bồ Đề', btn: '🧘 Thiền hơi thở tĩnh tâm', x: -8.8, z: 11.8, r: 3.1 }
+    ];
+    const zoneRings = ZONES.map(z => {
+      const mesh = addMesh(scene, new Ring(0.75, 1.02, 28), new MatB({ color: 0xffd56b, side: THREE.DoubleSide, transparent: true, opacity: 0.68 }), z.x, 0.07, z.z);
+      mesh.rotation.x = -Math.PI / 2;
+      const labelEl = document.createElement('div'); labelEl.className = 'zone-label'; labelEl.textContent = z.name;
+      bubblesLayer.appendChild(labelEl);
+      return { zone: z, mesh, labelEl };
+    });
+
+    let currentNearZone = null, activeCleanup = null;
+    const actionBtn = document.getElementById('action-btn'), modalEl = document.getElementById('activity-modal'), modalBody = document.getElementById('activity-dialog-content');
+
+    function openModal(html, mountFn, cleanupFn = null) {
+      if (activeCleanup) { activeCleanup(); activeCleanup = null; }
+      modalBody.innerHTML = html; modalEl.classList.remove('hidden');
+      activeCleanup = cleanupFn; if (mountFn) mountFn(modalBody);
+    }
+    function closeModal() {
+      if (activeCleanup) { activeCleanup(); activeCleanup = null; }
+      modalEl.classList.add('hidden'); modalBody.innerHTML = ''; camFocusTarget = null; disposeUnusedTextures();
+    }
+
+    actionBtn.addEventListener('click', () => {
+      if (!currentNearZone) return;
+      audio.init(); advanceTutorial(3);
+      const id = currentNearZone.id;
+      if (id === 'incense') openIncenseActivity();
+      else if (id === 'bell') openBellActivity();
+      else if (id === 'mo') openMoActivity();
+      else if (id === 'wish_tree') openWishActivity('ribbon');
+      else if (id === 'wish_pond') openWishActivity('lantern');
+      else if (id === 'fortune') openFortuneActivity();
+      else if (id === 'tutai') openTuTaiActivity();
+      else if (id === 'calligraphy') openCalligraphyActivity();
+      else if (id === 'meditate') openMeditationActivity();
+    });
+
+    // Chiêm bái tôn tượng Tự Tại Phật trong Chánh Điện
+    function openTuTaiActivity() {
+      camFocusTarget = new V3(0, 4.2, -14.3);
+      player.rotY = Math.PI; player.bowTimer = 4.0;
+      resonanceBoost = 1.0;
+      audio.playWishChime();
+      const KE_TU_TAI = [
+        "Quán tâm tự tại giữa đời thường,\nMột đóa sen vàng tỏa ngát hương.",
+        "Đi đứng nằm ngồi tâm chẳng động,\nTrăng soi mặt nước sáng mười phương.",
+        "Buông xả ưu phiền lòng thanh thản,\nMỉm cười tự tại đón bình an."
+      ];
+      const ke = KE_TU_TAI[Math.floor(Math.random() * KE_TU_TAI.length)];
+      openModal(`
+        <button class="close-x" id="m-close">✕</button>
+        <div class="temple-badge">Đại Hùng Bảo Điện</div>
+        <h2 class="dialog-title">Chiêm Bái Tự Tại Phật</h2>
+        <p class="dialog-sub">Ngước nhìn tôn tượng <b>Tự Tại Phật</b> ngự trên bảo tòa sen vàng trong thế ngồi Tự Tại ung dung, từ hòa.</p>
+        <div class="fortune-box scroll-unroll">
+          <div class="fortune-title">🪷 Kệ Quán Tâm Tự Tại</div>
+          <div class="fortune-poem" style="white-space:pre-line;">"${ke}"</div>
+          <div style="font-size:12.5px;color:#4a2511;">Tâm không vướng bận chính là cõi Tự Tại an lành nhất.</div>
+        </div>
+        <button class="primary-btn" id="btn-tutai-bow">🙏 Chắp tay đảnh lễ Tự Tại Phật</button>
+      `, r => {
+        r.querySelector('#m-close').onclick = closeModal;
+        r.querySelector('#btn-tutai-bow').onclick = () => {
+          audio.playBell(0.9, false);
+          resonanceBoost = 1.0;
+          saveData.bestTamAnScore = Math.min(100, Math.max(88, (saveData.bestTamAnScore || 82) + 3));
+          saveGameData();
+          closeModal();
+        };
+      });
+    }
+
+    // Hoạt động 1: Thắp hương (1 hoặc 3 nén)
+    function openIncenseActivity() {
+      camFocusTarget = new V3(0, 2.2, 8);
+      let count = 3;
+      openModal(`
+        <button class="close-x" id="m-close">✕</button>
+        <div class="temple-badge">Lư Hương Đồng</div>
+        <h2 class="dialog-title">Thắp Hương Cầu An</h2>
+        <p class="dialog-sub">Chọn 1 hoặc 3 nén tâm hương, chắp tay tĩnh lặng gửi lòng thành kính.</p>
+        <div class="choice-row">
+          <div class="choice-card" data-c="1">🕯️ 1 Nén Hương</div>
+          <div class="choice-card active" data-c="3">🕯️🕯️🕯️ 3 Nén Hương</div>
+        </div>
+        <div id="inc-msg" style="min-height:22px;color:var(--gold-lt);font-weight:700;margin:8px 0;"></div>
+        <button class="primary-btn" id="btn-do-inc">🙏 Chắp tay dâng hương</button>
+      `, r => {
+        r.querySelector('#m-close').onclick = closeModal;
+        const cards = r.querySelectorAll('.choice-card');
+        cards.forEach(c => c.onclick = () => { cards.forEach(x => x.classList.remove('active')); c.classList.add('active'); count = +c.dataset.c; });
+        r.querySelector('#btn-do-inc').onclick = () => {
+          audio.playWishChime(); player.rotY = Math.PI; player.bowTimer = 3.5;
+          spawnPlayerIncense(count); saveData.incenseCount += count; saveGameData();
+          r.querySelector('#inc-msg').textContent = `✨ Đã dâng ${count} nén hương. Khói hương đang bay lên...`;
+          const b = r.querySelector('#btn-do-inc'); b.textContent = 'Hoàn tất (Đóng)'; b.onclick = closeModal;
+        };
+      });
+    }
+
+    // Hoạt động 2: Thỉnh chuông đồng
+    function openBellActivity() {
+      camFocusTarget = new V3(-12.5, 3.6, -5.5);
+      let raf = null, size = 195, strikes = 0;
+      openModal(`
+        <button class="close-x" id="m-close">✕</button>
+        <div class="temple-badge">Gác Chuông</div>
+        <h2 class="dialog-title">Thỉnh Đại Hồng Chung</h2>
+        <p class="dialog-sub">Chạm quả chuông đúng lúc <b>vòng sáng co vào khít vòng tròn tâm</b> để tiếng chuông ngân dài.</p>
+        <div class="rhythm-arena" id="bell-zone">
+          <div class="target-circle">🔔</div>
+          <div class="shrinking-ring" id="bell-ring" style="width:190px;height:190px;"></div>
+        </div>
+        <div class="rhythm-feedback" id="bell-fb">Chạm chuông khi vòng sáng thu về tâm!</div>
+        <button class="secondary-btn" id="m-done">Xong</button>
+      `, r => {
+        r.querySelector('#m-close').onclick = r.querySelector('#m-done').onclick = closeModal;
+        const ring = r.querySelector('#bell-ring'), fb = r.querySelector('#bell-fb');
+        const loop = () => { size -= 1.85; if (size < 52) size = 195; ring.style.width = ring.style.height = size + 'px'; raf = requestAnimationFrame(loop); };
+        raf = requestAnimationFrame(loop);
+        r.querySelector('#bell-zone').onclick = () => {
+          const diff = Math.abs(size - 96); strikes++;
+          if (diff <= 20) {
+            audio.playBell(1.0, false); fb.textContent = `✨ Chuông ngân vang xa (${strikes}/3) — Hào quang bừng sáng!`;
+            bellSwingPhase = 1; bellWaveScale = 0.1; resonanceBoost = 1.0; canvas.classList.remove('shake'); void canvas.offsetWidth; canvas.classList.add('shake');
+          } else if (diff <= 38) {
+            audio.playBell(0.75, false); fb.textContent = `🔔 Tiếng chuông ấm áp (${strikes}/3).`; bellSwingPhase = 0.65; bellWaveScale = 0.1; resonanceBoost = 0.6;
+          } else {
+            audio.playBell(0.4, false); fb.textContent = 'Lệch nhịp đôi chút, hãy lắng nghe và chạm lại.'; bellSwingPhase = 0.35;
+          }
+          size = 195;
+        };
+      }, () => cancelAnimationFrame(raf));
+    }
+
+    // Hoạt động 3: Gõ mõ tụng kinh (30 giây theo nhịp)
+    function openMoActivity() {
+      camFocusTarget = new V3(-4.2, 1.8, -8.2);
+      let raf = null, t0 = performance.now(), size = 190, perf = 0, good = 0, miss = 0, done = false;
+      openModal(`
+        <button class="close-x" id="m-close">✕</button>
+        <div class="temple-badge">Chính Điện</div>
+        <h2 class="dialog-title">Gõ Mõ Tụng Kinh</h2>
+        <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;">
+          <span>⏳ Còn lại: <b id="mo-time">30s</b></span>
+          <span>🌸 Tâm an: <b id="mo-score">0</b>/100</span>
+        </div>
+        <div class="rhythm-arena" id="mo-zone">
+          <div class="target-circle" id="mo-icon">🪵</div>
+          <div class="shrinking-ring" id="mo-ring" style="width:190px;height:190px;"></div>
+        </div>
+        <div class="rhythm-feedback" id="mo-fb">Chạm mõ theo vòng nhịp...</div>
+        <div id="mo-res"></div>
+        <button class="secondary-btn" id="mo-end">Kết thúc lượt</button>
+      `, r => {
+        r.querySelector('#m-close').onclick = closeModal;
+        const timeEl = r.querySelector('#mo-time'), scEl = r.querySelector('#mo-score'), ring = r.querySelector('#mo-ring'), fb = r.querySelector('#mo-fb'), res = r.querySelector('#mo-res'), endBtn = r.querySelector('#mo-end');
+        const calc = () => { const tot = perf + good + miss; return tot ? Math.min(100, Math.max(45, Math.round(((perf + good * 0.72 + miss * 0.25) / tot) * 100))) : 65; };
+        const finish = () => {
+          if (done) return; done = true; cancelAnimationFrame(raf); ring.style.display = endBtn.style.display = 'none';
+          const sc = calc(); scEl.textContent = sc;
+          if (sc > saveData.bestTamAnScore) { saveData.bestTamAnScore = sc; saveGameData(); }
+          const praise = sc >= 88 ? 'Tâm tĩnh như mặt hồ sen chiều không gợn sóng!' : 'Nhịp mõ đều đặn, lòng an nhiên giữa tiếng chuông chùa.';
+          res.innerHTML = `<div class="fortune-box"><div class="fortune-title">Điểm Tâm An: ${sc}/100</div><div style="font-size:12.5px;">Tĩnh tâm: <b>${perf}</b> • Được: <b>${good}</b> • Lệch nhịp: <b>${miss}</b></div><div class="fortune-poem">"${praise}"</div></div><button class="primary-btn" id="mo-ok">🙏 Nhận lời chúc an lành</button>`;
+          res.querySelector('#mo-ok').onclick = closeModal; audio.playWishChime();
+        };
+        endBtn.onclick = finish;
+        const loop = now => {
+          if (done) return;
+          const rem = Math.max(0, Math.ceil(30 - (now - t0) / 1000)); timeEl.textContent = rem + 's';
+          if (rem <= 0) return finish();
+          size -= 2.15;
+          if (size < 48) { miss++; fb.textContent = 'Lệch nhịp'; scEl.textContent = calc(); size = 190; }
+          ring.style.width = ring.style.height = size + 'px'; raf = requestAnimationFrame(loop);
+        };
+        raf = requestAnimationFrame(loop);
+        r.querySelector('#mo-zone').onclick = () => {
+          if (done) return;
+          const d = Math.abs(size - 96);
+          if (d <= 20) { perf++; resonanceBoost = Math.min(1, resonanceBoost + 0.35); audio.playMo('perfect'); fb.textContent = '✨ Tĩnh tâm! (Hào quang cộng hưởng)'; }
+          else if (d <= 40) { good++; audio.playMo('good'); fb.textContent = '🌿 Được!'; }
+          else { miss++; audio.playMo('miss'); fb.textContent = 'Lệch nhịp'; }
+          scEl.textContent = calc(); size = 190;
+        };
+      }, () => cancelAnimationFrame(raf));
+    }
+
+    // Hoạt động 4: Viết lời cầu an (Dải lụa đỏ cây bồ đề hoặc Hoa đăng hồ sen)
+    function openWishActivity(type = 'ribbon') {
+      const CHIPS = ["Cầu cha mẹ và gia đình luôn mạnh khoẻ, bình an", "Mong kỳ thi sắp tới bình tĩnh, đạt kết quả tốt", "Cầu một năm tâm an, công việc thuận hòa", "Mong ông bà vui khoẻ bên con cháu"];
+      openModal(`
+        <button class="close-x" id="m-close">✕</button>
+        <div class="temple-badge">Gửi Ước Nguyện</div>
+        <h2 class="dialog-title">Viết Lời Cầu An</h2>
+        <div class="choice-row">
+          <div class="choice-card ${type === 'ribbon' ? 'active' : ''}" data-t="ribbon">🎀 Dải lụa đỏ<br/><small>Treo cây bồ đề</small></div>
+          <div class="choice-card ${type === 'lantern' ? 'active' : ''}" data-t="lantern">🪷 Đèn hoa đăng<br/><small>Thả xuống hồ sen</small></div>
+        </div>
+        <div class="chip-list">
+          <span class="wish-chip" data-i="0">Gia đình khoẻ mạnh</span>
+          <span class="wish-chip" data-i="1">Thi cử thuận lợi</span>
+          <span class="wish-chip" data-i="2">Tâm an vạn sự an</span>
+          <span class="wish-chip" data-i="3">Ông bà trường thọ</span>
+        </div>
+        <textarea id="w-txt" class="input-field" rows="3" maxlength="120" style="text-align:left;" placeholder="Viết lời cầu an (tối đa 120 ký tự)..."></textarea>
+        <div id="w-err" style="color:#ff8a80;font-size:12px;min-height:18px;margin-bottom:6px;"></div>
+        <button class="primary-btn" id="w-send">✨ Gửi lời cầu an</button>
+      `, r => {
+        r.querySelector('#m-close').onclick = closeModal;
+        const txt = r.querySelector('#w-txt'), err = r.querySelector('#w-err'), cards = r.querySelectorAll('.choice-card');
+        cards.forEach(c => c.onclick = () => { cards.forEach(x => x.classList.remove('active')); c.classList.add('active'); type = c.dataset.t; });
+        r.querySelectorAll('.wish-chip').forEach(ch => ch.onclick = () => { txt.value = CHIPS[+ch.dataset.i]; err.textContent = ''; });
+        r.querySelector('#w-send').onclick = () => {
+          const val = txt.value.trim();
+          if (!val) { err.textContent = 'Bạn hãy viết đôi lời ước nguyện nhé.'; return; }
+          if (containsProfanity(val)) { err.textContent = 'Xin dùng lời lẽ thanh tịnh, nhẹ nhàng nơi cửa chùa.'; return; }
+          if (type === 'ribbon') spawnRibbonOnBodhiTree(true); else spawnFloatingLantern(true);
+          saveData.wishes.unshift({ text: val, type, time: new Date().toLocaleDateString('vi-VN') });
+          saveGameData(); audio.playWishChime(); closeModal();
+        };
+      });
+    }
+
+    // Hoạt động 5: Xin quẻ đầu năm (Giải trí - Cuộn lụa mở dần)
+    function openFortuneActivity() {
+      camFocusTarget = new V3(4.2, 1.8, -8.2);
+      let prog = 0, drawn = false, rmMotion = null;
+      openModal(`
+        <button class="close-x" id="m-close">✕</button>
+        <div class="temple-badge">Xin Quẻ Đầu Năm</div>
+        <h2 class="dialog-title">Gieo Quẻ Bình An</h2>
+        <p class="dialog-sub">Chạm nút bên dưới (hoặc lắc điện thoại) để lắc ống xăm và mở cuộn lụa đầu năm tích cực.</p>
+        <div id="f-stage">
+          <div id="f-cyl" style="font-size:54px;">🎋</div>
+          <div style="width:75%;height:10px;background:rgba(255,255,255,0.12);border-radius:99px;margin:10px auto;overflow:hidden;"><div id="f-bar" style="width:0%;height:100%;background:var(--gold);"></div></div>
+        </div>
+        <button class="primary-btn" id="f-btn">🎋 Chạm để lắc ống xăm</button>
+        <div class="disclaimer-note">✨ Mang tính giải trí • Gợi mở niềm vui và năng lượng tích cực</div>
+      `, r => {
+        r.querySelector('#m-close').onclick = closeModal;
+        const step = (amt = 35) => {
+          if (drawn) return;
+          prog = Math.min(100, prog + amt); r.querySelector('#f-bar').style.width = prog + '%';
+          audio.playShakeStick();
+          if (prog >= 100) {
+            drawn = true;
+            const f = FORTUNE_LIST[Math.floor(Math.random() * FORTUNE_LIST.length)];
+            saveData.fortunes.unshift({ ...f, time: new Date().toLocaleDateString('vi-VN') });
+            saveGameData(); audio.playWishChime();
+            r.querySelector('#f-stage').innerHTML = `<div class="fortune-box scroll-unroll"><div style="font-size:12px;font-weight:700;color:#8f1d1d;">THẺ XĂM SỐ ${f.id} / 40</div><div class="fortune-title">${f.name}</div><div class="fortune-poem">${f.poem}</div><div style="font-size:13px;">${f.msg}</div></div>`;
+            const b = r.querySelector('#f-btn'); b.textContent = '🙏 Nhận quẻ lành (Đóng)'; b.onclick = closeModal;
+          }
+        };
+        r.querySelector('#f-btn').onclick = () => step(35);
+        const onMot = e => { const a = e.accelerationIncludingGravity; if (a && (Math.abs(a.x||0)+Math.abs(a.y||0)+Math.abs(a.z||0)) > 23) step(25); };
+        window.addEventListener('devicemotion', onMot);
+        rmMotion = () => window.removeEventListener('devicemotion', onMot);
+      }, () => { if (rmMotion) rmMotion(); });
+    }
+
+    // Hoạt động 6: Xin Chữ Ông Đồ Đầu Xuân (Thư Pháp Quốc Ngữ)
+    function openCalligraphyActivity() {
+      camFocusTarget = new V3(11.5, 1.4, -4.5);
+      let selIdx = 0;
+      const chipsHtml = CALLIGRAPHY_LIST.map((c, i) => `<span class="wish-chip ${i === 0 ? 'active' : ''}" data-idx="${i}" style="font-weight:700;">Chữ ${c.word}</span>`).join('');
+      openModal(`
+        <button class="close-x" id="m-close">✕</button>
+        <div class="temple-badge">Chiếu Ông Đồ</div>
+        <h2 class="dialog-title">Xin Chữ Thư Pháp Đầu Xuân</h2>
+        <p class="dialog-sub">Chọn một chữ tâm nguyện để Ông Đồ thảo nét bút đầu xuân trên giấy đỏ đào:</p>
+        <div class="chip-list" id="cal-chips">${chipsHtml}</div>
+        <div id="cal-preview"></div>
+        <button class="primary-btn" id="cal-receive">🖌️ Xin nhận bức thư pháp</button>
+      `, r => {
+        r.querySelector('#m-close').onclick = closeModal;
+        const prev = r.querySelector('#cal-preview');
+        const renderScroll = idx => {
+          const item = CALLIGRAPHY_LIST[idx];
+          prev.innerHTML = `
+            <div class="calligraphy-scroll scroll-unroll">
+              <div style="font-size:11px;letter-spacing:2px;opacity:0.9;">PHƯỚC LINH CỔ TỰ • THƯ PHÁP</div>
+              <div class="calligraphy-char">${item.word}</div>
+              <div style="font-weight:800;font-size:14px;color:#fff5dc;margin-bottom:4px;">${item.title}</div>
+              <div style="font-style:italic;font-size:12.5px;line-height:1.45;white-space:pre-line;color:#ffe599;">"${item.poem}"</div>
+              <div style="font-size:11.5px;color:#f7d794;margin-top:6px;">${item.desc}</div>
+            </div>`;
+        };
+        renderScroll(0);
+        r.querySelectorAll('#cal-chips .wish-chip').forEach(ch => {
+          ch.onclick = () => {
+            selIdx = +ch.dataset.idx;
+            audio.playWindChime();
+            renderScroll(selIdx);
+          };
+        });
+        r.querySelector('#cal-receive').onclick = () => {
+          const item = CALLIGRAPHY_LIST[selIdx];
+          saveData.calligraphies.unshift({ word: item.word, title: item.title, desc: item.desc, time: new Date().toLocaleDateString('vi-VN') });
+          saveGameData();
+          audio.playWishChime();
+          resonanceBoost = 0.85;
+          closeModal();
+        };
+      });
+    }
+
+    // Hoạt động 7: Thiền Hơi Thở Dưới Gốc Bồ Đề (Chánh niệm & Tĩnh tâm)
+    function openMeditationActivity() {
+      camFocusTarget = new V3(-10.5, 2.2, 9.2);
+      player.pose = 'meditate';
+      let timer = null, cycle = 0, phase = 0;
+      const phases = [
+        { label: 'Hít vào nhẹ nhàng...', sub: 'Cảm nhận hương trầm và gió mát ban chiều', scale: 1.28, sound: true },
+        { label: 'Giữ hơi tĩnh lặng...', sub: 'Lắng nghe tiếng chuông gió ngân đầu đao', scale: 1.28, sound: false },
+        { label: 'Thở ra buông thư...', sub: 'Buông bỏ mọi muộn phiền, để lòng nhẹ tênh', scale: 0.82, sound: true }
+      ];
+      openModal(`
+        <button class="close-x" id="m-close">✕</button>
+        <div class="temple-badge">Gốc Bồ Đề Cổ Thụ</div>
+        <h2 class="dialog-title">Thiền Hơi Thở Tĩnh Tâm</h2>
+        <p class="dialog-sub">Ngồi bên bàn trà đá dưới bóng Bồ Đề, điều hòa 3 nhịp thở sâu để an định thân tâm.</p>
+        <div class="breath-circle" id="breath-lotus">
+          <div style="font-size:32px;">🪷</div>
+          <div id="breath-step" style="font-size:13px;font-weight:800;color:var(--gold-lt);margin-top:4px;">Chuẩn bị...</div>
+        </div>
+        <div id="breath-sub" class="rhythm-feedback" style="font-size:13.5px;">Nhịp thở: 1 / 3</div>
+        <button class="secondary-btn" id="med-done">Hoàn tất thiền</button>
+      `, r => {
+        const exitMed = () => { player.pose = 'stand'; closeModal(); };
+        r.querySelector('#m-close').onclick = r.querySelector('#med-done').onclick = exitMed;
+        const lotus = r.querySelector('#breath-lotus'), stepEl = r.querySelector('#breath-step'), subEl = r.querySelector('#breath-sub'), btn = r.querySelector('#med-done');
+        const runPhase = () => {
+          if (cycle >= 3) {
+            saveData.meditationCount = (saveData.meditationCount || 0) + 1;
+            saveData.bestTamAnScore = Math.min(100, Math.max(85, (saveData.bestTamAnScore || 80) + 5));
+            saveGameData();
+            audio.playWishChime();
+            resonanceBoost = 1.0;
+            stepEl.textContent = '✨ Tâm An Lạc';
+            subEl.textContent = 'Đã hoàn thành 3 nhịp thở chánh niệm (+5 Điểm Tâm An)!';
+            btn.className = 'primary-btn';
+            btn.textContent = '🙏 Xả thiền & Đứng dậy';
+            return;
+          }
+          const p = phases[phase];
+          lotus.style.transform = `scale(${p.scale})`;
+          stepEl.textContent = p.label;
+          subEl.textContent = `Nhịp ${cycle + 1}/3 — ${p.sub}`;
+          if (p.sound) audio.playWindChime();
+          phase++;
+          if (phase >= phases.length) { phase = 0; cycle++; }
+          timer = setTimeout(runPhase, 3400);
+        };
+        setTimeout(runPhase, 250);
+      }, () => { clearTimeout(timer); player.pose = 'stand'; });
+    }
+
+    /* === 7. SỔ CẦU AN CỦA TÔI & CHIA SẺ ẢNH DỌC 1080×1350 (CANVAS + WEB SHARE API) === */
+    document.getElementById('btn-journal').onclick = () => {
+      const wHtml = saveData.wishes.length ? saveData.wishes.map(w => `<div class="journal-item"><b>${w.type === 'ribbon' ? '🎀 Dải lụa' : '🪷 Hoa đăng'}</b>: "${w.text.replace(/</g,'&lt;')}"</div>`).join('') : '<div class="journal-item">Chưa có lời cầu an nào.</div>';
+      const fHtml = saveData.fortunes.length ? saveData.fortunes.map(f => `<div class="journal-item"><b>🎋 ${f.name}</b>: ${f.msg} <small>(Mang tính giải trí)</small></div>`).join('') : '<div class="journal-item">Chưa xin quẻ đầu năm nào.</div>';
+      const cHtml = saveData.calligraphies?.length ? saveData.calligraphies.map(c => `<div class="journal-item"><b>🖌️ ${c.title}</b>: ${c.desc}</div>`).join('') : '<div class="journal-item">Chưa xin chữ Ông Đồ đầu xuân.</div>';
+      openModal(`
+        <button class="close-x" id="m-close">✕</button>
+        <div class="temple-badge">Phước Linh Cổ Tự</div>
+        <h2 class="dialog-title">Sổ Cầu An Của Tôi</h2>
+        <div style="margin-bottom:6px;color:var(--gold-lt);">Người cầu an: <b>${(saveData.playerName || 'Khách Hành Hương').replace(/</g,'&lt;')}</b></div>
+        <div class="outfit-grid" id="journal-outfit-grid" style="margin-bottom:8px;">
+          <div class="outfit-card ${saveData.outfit==='lam'?'active':''}" data-outfit="lam">🩵 Áo Lam</div>
+          <div class="outfit-card ${saveData.outfit==='aodai_do'?'active':''}" data-outfit="aodai_do">❤️ Áo Dài Đỏ</div>
+          <div class="outfit-card ${saveData.outfit==='aotac_vang'?'active':''}" data-outfit="aotac_vang">💛 Áo Tấc Vàng</div>
+          <div class="outfit-card ${saveData.outfit==='nausong'?'active':''}" data-outfit="nausong">🤎 Áo Nâu Sồng</div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-box"><div class="stat-num">${saveData.incenseCount}</div><div class="stat-label">Nén hương</div></div>
+          <div class="stat-box"><div class="stat-num">${saveData.bestTamAnScore}</div><div class="stat-label">Tâm An</div></div>
+          <div class="stat-box"><div class="stat-num">${saveData.wishes.length}</div><div class="stat-label">Lời cầu</div></div>
+          <div class="stat-box"><div class="stat-num">${saveData.calligraphies?.length || 0}</div><div class="stat-label">Chữ Xuân</div></div>
+        </div>
+        <div class="journal-section">${wHtml}</div>
+        <div class="journal-section">${cHtml}</div>
+        <div class="journal-section">${fHtml}</div>
+        <button class="primary-btn" id="j-share">🌸 Tạo ảnh chia sẻ 1080×1350</button>
+      `, r => {
+        r.querySelector('#m-close').onclick = closeModal;
+        r.querySelectorAll('#journal-outfit-grid .outfit-card').forEach(oc => {
+          oc.onclick = () => {
+            r.querySelectorAll('#journal-outfit-grid .outfit-card').forEach(x => x.classList.remove('active'));
+            oc.classList.add('active');
+            setPlayerOutfit(oc.dataset.outfit);
+          };
+        });
+        r.querySelector('#j-share').onclick = () => { closeModal(); openShareModal(); };
+      });
+    };
+
+    function generateSharePoster() {
+      renderer.render(scene, camera);
+      const out = document.createElement('canvas'); out.width = 1080; out.height = 1350;
+      const ctx = out.getContext('2d');
+      const g = ctx.createLinearGradient(0, 0, 0, 1350);
+      g.addColorStop(0, '#2a120d'); g.addColorStop(0.55, '#431c14'); g.addColorStop(1, '#1b0b08');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, 1080, 1350);
+      try { ctx.drawImage(canvas, 70, 175, 940, 560); } catch {}
+      ctx.strokeStyle = '#f6c967'; ctx.lineWidth = 6; ctx.strokeRect(32, 32, 1016, 1286); ctx.strokeRect(70, 175, 940, 560);
+      ctx.fillStyle = '#f6c967'; ctx.textAlign = 'center'; ctx.font = 'bold 28px Georgia, serif'; ctx.fillText('❖  PHƯỚC LINH CỔ TỰ  ❖', 540, 90);
+      ctx.fillStyle = '#fff5dc'; ctx.font = 'bold 52px Georgia, serif'; ctx.fillText('LÊN CHÙA CẦU AN', 540, 148);
+      ctx.fillStyle = 'rgba(24,11,7,0.9)'; ctx.fillRect(70, 770, 940, 480); ctx.strokeRect(70, 770, 940, 480);
+      // Ấn chương chữ Thư Pháp nếu người chơi đã xin chữ
+      const calWord = saveData.calligraphies?.[0]?.word || 'AN';
+      ctx.fillStyle = '#8f1d1d'; ctx.fillRect(875, 795, 105, 105);
+      ctx.strokeStyle = '#f6c967'; ctx.lineWidth = 3; ctx.strokeRect(875, 795, 105, 105);
+      ctx.fillStyle = '#ffe599'; ctx.font = 'bold 42px Georgia, serif'; ctx.fillText(calWord, 927, 862);
+
+      ctx.fillStyle = '#ffe49e'; ctx.font = 'bold 38px "Segoe UI", sans-serif';
+      ctx.fillText('🙏 Người cầu an: ' + (saveData.playerName || 'Khách Hành Hương'), 500, 845);
+      const wish = saveData.wishes[0]?.text || 'Cầu chúc gia đình mạnh khoẻ, tâm an vạn sự lành, bốn mùa bình yên.';
+      ctx.fillStyle = '#fff8eb'; ctx.font = 'italic 33px Georgia, serif';
+      ctx.fillText('"' + wish.slice(0, 58) + (wish.length > 58 ? '...' : '') + '"', 540, 955);
+      if (wish.length > 58) ctx.fillText('"' + wish.slice(58) + '"', 540, 1005);
+      ctx.fillStyle = '#f6c967'; ctx.font = 'bold 33px "Segoe UI", sans-serif';
+      ctx.fillText(`🌸 Điểm Tâm An: ${saveData.bestTamAnScore || 88}/100  •  🕯️ Đã thắp: ${Math.max(1, saveData.incenseCount)} nén hương  •  🖌️ Chữ: ${calWord}`, 540, 1125);
+      ctx.fillStyle = '#dcc8ad'; ctx.font = '600 25px "Segoe UI", sans-serif';
+      ctx.fillText('Lên Chùa Cầu An — Trải nghiệm Web 3D Phước Linh Cổ Tự', 540, 1200);
+      return out;
+    }
+
+    function buildShareUrl() {
+      const base = window.location.href.split('?')[0].split('#')[0];
+      const p = new URLSearchParams();
+      p.set('from', saveData.playerName || 'Một người bạn');
+      p.set('wish', saveData.wishes[0]?.text || 'Cầu chúc gia đình mạnh khoẻ, tâm an vạn sự lành.');
+      p.set('word', saveData.calligraphies?.[0]?.word || 'AN');
+      return `${base}?${p.toString()}`;
+    }
+
+    function openShareModal() {
+      const c = generateSharePoster(), url = c.toDataURL('image/png'), shareLink = buildShareUrl();
+      openModal(`
+        <button class="close-x" id="m-close">✕</button>
+        <div class="temple-badge">Thiệp & Link Cầu An</div>
+        <h2 class="dialog-title">Chia Sẻ Cho Bạn Bè</h2>
+        <img id="share-preview-img" src="${url}" alt="Poster 1080x1350" />
+        <div style="display:flex;gap:8px;margin-bottom:8px;">
+          <button class="secondary-btn" id="s-dl" style="flex:1;">⬇️ Tải ảnh</button>
+          <button class="primary-btn" id="s-sh" style="flex:1;">📲 Gửi ảnh / Link</button>
+        </div>
+        <button class="secondary-btn" id="s-copy-link" style="width:100%;">🔗 Sao chép Link kèm lời chúc bình an</button>
+        <div id="s-copy-msg" style="font-size:12px;color:var(--gold-lt);min-height:18px;margin-top:6px;"></div>
+      `, r => {
+        r.querySelector('#m-close').onclick = closeModal;
+        const dl = () => { const a = document.createElement('a'); a.href = url; a.download = 'len-chua-cau-an.png'; a.click(); };
+        r.querySelector('#s-dl').onclick = dl;
+        r.querySelector('#s-copy-link').onclick = async () => {
+          try {
+            await navigator.clipboard.writeText(shareLink);
+            r.querySelector('#s-copy-msg').textContent = '✨ Đã sao chép Link! Bạn có thể dán gửi qua Zalo, Messenger...';
+          } catch {
+            r.querySelector('#s-copy-msg').textContent = shareLink;
+          }
+        };
+        r.querySelector('#s-sh').onclick = async () => {
+          try {
+            const blob = await new Promise(res => c.toBlob(res, 'image/png'));
+            const file = new File([blob], 'len-chua-cau-an.png', { type: 'image/png' });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              await navigator.share({ title: 'Lên Chùa Cầu An — Phước Linh Cổ Tự', text: 'Gửi bạn lời chúc bình an từ Phước Linh Cổ Tự: ' + shareLink, files: [file] });
+              return;
+            }
+            if (navigator.share) {
+              await navigator.share({ title: 'Lên Chùa Cầu An — Phước Linh Cổ Tự', text: 'Gửi bạn lời chúc bình an từ Phước Linh Cổ Tự', url: shareLink });
+              return;
+            }
+          } catch {}
+          dl();
+        };
+      });
+    }
+    document.getElementById('btn-share-open').onclick = openShareModal;
+
+    /* === 8. MÀN CHÀO, CHỌN ÁO, 4 THỜI KHẮC, CHẾ ĐỘ CHIÊM BÁI & VÒNG LẶP CHÍNH === */
+    const welcomeEl = document.getElementById('welcome-screen'), nameInp = document.getElementById('player-name-input'), tutBar = document.getElementById('tutorial-bar'), tutTxt = document.getElementById('tutorial-text');
+    if (saveData.playerName) nameInp.value = saveData.playerName;
+    // Hiển thị lời chúc nếu người dùng mở từ Link chia sẻ (?from=...&wish=...&word=...)
+    {
+      const params = new URLSearchParams(window.location.search);
+      const fromUser = params.get('from'), wishText = params.get('wish'), calWord = params.get('word');
+      if (fromUser || wishText) {
+        const banner = document.getElementById('shared-blessing-banner');
+        banner.classList.remove('hidden');
+        const safeFrom = (fromUser || 'Một người bạn').slice(0, 32).replace(/</g, '&lt;');
+        const safeWish = (wishText || 'Chúc bạn bốn mùa bình an, tâm sáng vạn sự lành.').slice(0, 120).replace(/</g, '&lt;');
+        const safeWord = (calWord || 'AN').slice(0, 8).replace(/</g, '&lt;');
+        banner.innerHTML = `<div style="font-size:12px;font-weight:800;color:#8f1d1d;">💌 THIỆP CẦU AN TỪ: ${safeFrom.toUpperCase()} (CHỮ "${safeWord}")</div><div class="fortune-poem">"${safeWish}"</div><div style="font-size:11.5px;color:#4a2511;">Mời bạn cùng bước vào Phước Linh Cổ Tự lễ Tự Tại Phật và gửi ước nguyện riêng!</div>`;
+      }
+    }
+    document.querySelectorAll('#welcome-outfit-grid .outfit-card').forEach(oc => {
+      if (oc.dataset.outfit === saveData.outfit) oc.classList.add('active'); else oc.classList.remove('active');
+      oc.onclick = () => {
+        document.querySelectorAll('#welcome-outfit-grid .outfit-card').forEach(x => x.classList.remove('active'));
+        oc.classList.add('active');
+        setPlayerOutfit(oc.dataset.outfit);
+      };
+    });
+
+    let tutStep = saveData.tutorialDone ? 4 : 0;
+    function advanceTutorial(s) {
+      if (saveData.tutorialDone || tutStep >= s) return;
+      tutStep = s;
+      if (s === 1) { tutBar.classList.remove('hidden'); tutTxt.innerHTML = '<b>Hướng dẫn (1/3):</b> Kéo cần điều khiển góc trái (hoặc WASD/Mũi tên) để đi lại.'; }
+      else if (s === 2) tutTxt.innerHTML = '<b>Hướng dẫn (2/3):</b> Đi tới gần các <b>vòng tròn sáng vàng</b> trong sân chùa.';
+      else if (s === 3) { tutTxt.innerHTML = '<b>Hướng dẫn (3/3):</b> Chạm vào <b>nút hành động lớn góc phải</b> để cầu an!'; setTimeout(() => { tutBar.classList.add('hidden'); saveData.tutorialDone = true; saveGameData(); }, 3500); }
+    }
+    document.getElementById('btn-skip-tut').onclick = () => { tutBar.classList.add('hidden'); saveData.tutorialDone = true; tutStep = 4; saveGameData(); };
+    document.getElementById('btn-enter-temple').onclick = () => {
+      saveData.playerName = nameInp.value.trim() || 'Khách Hành Hương'; saveGameData();
+      welcomeEl.classList.add('hidden'); audio.init(); if (!saveData.tutorialDone) advanceTutorial(1);
+    };
+    document.getElementById('btn-sound').onclick = e => { e.currentTarget.textContent = audio.toggleMute() ? '🔇 Đã tắt tiếng' : '🔊 Tiếng chùa'; };
+
+    // Chuyển đổi 4 Thời khắc & Thời tiết linh thiêng (kèm chế độ Tự động)
+    const WEATHER_MODES = [
+      { id: 'auto', label: 'Tự động', btn: '🌅 Cảnh sắc' },
+      { id: 'dawn', label: 'Sương sớm ban mai', btn: '🌤️ Sương sớm', bg: 0x6b544c, sun: 1.45, hemi: 0.95, rain: 0 },
+      { id: 'sunset', label: 'Hoàng hôn ấm áp', btn: '🌇 Hoàng hôn', bg: 0x4b1d26, sun: 1.35, hemi: 0.85, rain: 0 },
+      { id: 'night', label: 'Đêm hội Hoa Đăng', btn: '🏮 Đêm hoa đăng', bg: 0x101328, sun: 0.42, hemi: 0.52, rain: 0 },
+      { id: 'rain', label: 'Mưa xuân lất phất', btn: '🌧️ Mưa xuân', bg: 0x2c3545, sun: 0.78, hemi: 0.75, rain: 0.68 }
+    ];
+    let weatherIdx = 0;
+    const skyLabelEl = document.getElementById('sky-label-el'), weatherBtn = document.getElementById('btn-weather');
+    weatherBtn.onclick = () => {
+      weatherIdx = (weatherIdx + 1) % WEATHER_MODES.length;
+      const wm = WEATHER_MODES[weatherIdx];
+      weatherBtn.textContent = wm.btn;
+      skyLabelEl.textContent = wm.label;
+      MATS.brick.roughness = wm.id === 'rain' ? 0.35 : 0.88;
+      rainP.mat.opacity = wm.rain || 0;
+      audio.playWindChime();
+    };
+
+    // Chế độ Chiêm bái Phật đài & Chụp ảnh kỷ niệm (Photo Mode)
+    const photoBar = document.getElementById('photo-bar'), hudBottom = document.getElementById('hud-bottom-controls');
+    let photoCamMode = null;
+    document.getElementById('btn-photo').onclick = () => {
+      const open = photoBar.classList.contains('hidden');
+      if (open) {
+        photoBar.classList.remove('hidden'); hudBottom.classList.add('hidden');
+        photoCamMode = 'buddha'; player.pose = 'bow'; player.rotY = Math.PI;
+      } else {
+        photoBar.classList.add('hidden'); hudBottom.classList.remove('hidden');
+        photoCamMode = null; player.pose = 'stand';
+      }
+    };
+    document.getElementById('btn-photo-close').onclick = () => {
+      photoBar.classList.add('hidden'); hudBottom.classList.remove('hidden');
+      photoCamMode = null; player.pose = 'stand';
+    };
+    document.querySelectorAll('#photo-angles .wish-chip').forEach(ch => {
+      ch.onclick = () => { photoCamMode = ch.dataset.cam; audio.playWindChime(); };
+    });
+    document.querySelectorAll('#photo-poses .wish-chip').forEach(ch => {
+      ch.onclick = () => { player.pose = ch.dataset.pose; if (player.pose === 'bow') player.rotY = Math.PI; };
+    });
+    document.getElementById('btn-photo-snap').onclick = () => {
+      photoBar.classList.add('hidden'); hudBottom.classList.remove('hidden');
+      openShareModal();
+    };
+
+    window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+
+    const cSunset = new Col(0x4b1d26), cNight = new Col(0x111326), cSky = new Col(), clock = new THREE.Clock(), proj = new V3();
+    let skyTime = 0;
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const dt = Math.min(clock.getDelta(), 0.05), el = clock.elapsedTime;
+      const wm = WEATHER_MODES[weatherIdx];
+      if (wm.id === 'auto') {
+        skyTime += dt * 0.012;
+        const nf = 0.5 - 0.5 * Math.cos(Math.min(skyTime, Math.PI));
+        cSky.lerpColors(cSunset, cNight, nf); scene.background.copy(cSky); scene.fog.color.copy(cSky);
+        sunLight.intensity = 1.35 * (1 - nf * 0.68); hemiLight.intensity = 0.85 - nf * 0.3;
+        skyLabelEl.textContent = nf > 0.55 ? 'Đêm thanh tịnh' : 'Hoàng hôn';
+      } else {
+        cSky.setHex(wm.bg); scene.background.lerp(cSky, 0.05); scene.fog.color.copy(scene.background);
+        sunLight.intensity += (wm.sun - sunLight.intensity) * 0.05;
+        hemiLight.intensity += (wm.hemi - hemiLight.intensity) * 0.05;
+      }
+
+      // Hiệu ứng Hào quang Phật đài cộng hưởng khi gõ mõ / thỉnh chuông / thiền định
+      if (resonanceBoost > 0.005) resonanceBoost = Math.max(0, resonanceBoost - dt * 0.18);
+      const haloScale = 1 + Math.sin(el * 2.5) * 0.04 + resonanceBoost * 0.35;
+      buddhaHalo.scale.setScalar(haloScale);
+      buddhaHaloOuter.scale.setScalar(haloScale * 1.08);
+      buddhaHaloOuter.material.opacity = 0.25 + resonanceBoost * 0.55;
+      windChimes.forEach((wc, idx) => { wc.rotation.z = Math.sin(el * 3.2 + idx) * 0.16; });
+      bodhiRibbonsGroup.children.forEach(rb => { rb.rotation.z = Math.sin(el * 2.4 + (rb.userData.phase || 0)) * 0.18; });
+
+      let mx = joyState.dx + (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0);
+      let mz = joyState.dy + (keys.KeyS || keys.ArrowDown ? 1 : 0) - (keys.KeyW || keys.ArrowUp ? 1 : 0);
+      const mLen = Math.hypot(mx, mz), modalOpen = !modalEl.classList.contains('hidden') || !welcomeEl.classList.contains('hidden');
+
+      if (mLen > 0.05 && !modalOpen) {
+        if (player.pose === 'meditate') player.pose = 'stand';
+        const nx = mx / Math.max(1, mLen), nz = mz / Math.max(1, mLen), cY = Math.cos(camYaw), sY = Math.sin(camYaw);
+        const wx = nx * cY + nz * sY, wz = -nx * sY + nz * cY;
+        const pos = resolveCollisions(player.x + wx * player.speed * dt, player.z + wz * player.speed * dt, 0.48);
+        player.x = pos.x; player.z = pos.z; player.rotY = Math.atan2(wx, wz); player.walkCycle += dt * 11;
+        if (tutStep === 1) advanceTutorial(2);
+      } else player.walkCycle = 0;
+
+      const sitOffset = player.pose === 'meditate' ? -0.24 : 0;
+      player.group.position.set(player.x, sitOffset, player.z); player.group.rotation.y = player.rotY;
+      if (player.bowTimer > 0 || player.pose === 'bow') {
+        if (player.bowTimer > 0) player.bowTimer -= dt;
+        player.leftArm.rotation.set(-1.1, 0, -0.35); player.rightArm.rotation.set(-1.1, 0, 0.35);
+        player.leftLeg.rotation.x = player.rightLeg.rotation.x = 0;
+      } else if (player.pose === 'meditate') {
+        player.leftArm.rotation.set(-0.65, 0, -0.25); player.rightArm.rotation.set(-0.65, 0, 0.25);
+        player.leftLeg.rotation.x = -1.2; player.rightLeg.rotation.x = -1.2;
+      } else {
+        const sw = Math.sin(player.walkCycle) * 0.45;
+        player.leftLeg.rotation.x = sw; player.rightLeg.rotation.x = -sw;
+        player.leftArm.rotation.set(-sw * 0.7, 0, 0); player.rightArm.rotation.set(sw * 0.7, 0, 0);
+      }
+
+      let nearest = null, minD = Infinity;
+      const hideLabels = modalOpen || !photoBar.classList.contains('hidden');
+      for (const zr of zoneRings) {
+        const d = Math.hypot(player.x - zr.zone.x, player.z - zr.zone.z);
+        if (d < zr.zone.r && d < minD) { nearest = zr.zone; minD = d; }
+        proj.set(zr.zone.x, 2.3, zr.zone.z).project(camera);
+        if (proj.z < 1 && d < 19 && !hideLabels) {
+          zr.labelEl.style.display = 'block';
+          zr.labelEl.style.left = ((proj.x * 0.5 + 0.5) * window.innerWidth) + 'px';
+          zr.labelEl.style.top = ((-proj.y * 0.5 + 0.5) * window.innerHeight) + 'px';
+        } else zr.labelEl.style.display = 'none';
+      }
+      if (nearest && !hideLabels) {
+        currentNearZone = nearest; actionBtn.textContent = nearest.btn; actionBtn.classList.add('visible');
+        if (tutStep === 2) advanceTutorial(3);
+      } else { currentNearZone = null; actionBtn.classList.remove('visible'); }
+
+      if (camFocusTarget) {
+        camera.position.lerp(new V3(camFocusTarget.x, camFocusTarget.y + 1.4, camFocusTarget.z + 4.8), 0.08);
+        camera.lookAt(camFocusTarget);
+      } else if (photoCamMode === 'buddha') {
+        camera.position.lerp(new V3(0, 2.2, -5.8), 0.08);
+        camera.lookAt(0, 4.3, -14.1);
+      } else if (photoCamMode === 'overview') {
+        camera.position.lerp(new V3(0, 12.5, 25.5), 0.06);
+        camera.lookAt(0, 2.5, -4);
+      } else if (photoCamMode === 'pond') {
+        camera.position.lerp(new V3(7.2, 2.6, 9.8), 0.08);
+        camera.lookAt(12.2, 1.8, 5.5);
+      } else {
+        const port = window.innerHeight > window.innerWidth, dist = port ? 6.8 : 5.6, h = (port ? 3.5 : 2.9) + camPitch * 3;
+        camera.position.x += (player.x + Math.sin(camYaw) * dist - camera.position.x) * 0.1;
+        camera.position.y += (h - camera.position.y) * 0.1;
+        camera.position.z += (player.z + Math.cos(camYaw) * dist - camera.position.z) * 0.1;
+        camera.lookAt(player.x, 1.35, player.z - 0.6);
+      }
+
+      // Đàn cá Koi bơi lượn dưới mặt hồ sen
+      for (let k = 0; k < KOI_COUNT; k++) {
+        const ki = koiList[k];
+        ki.a += ki.spd * ki.dir * dt;
+        const kx = Math.cos(ki.a) * ki.r, kz = Math.sin(ki.a) * ki.r;
+        koiDummy.position.set(kx, 0.36, kz);
+        koiDummy.rotation.set(0, -ki.a + (ki.dir > 0 ? Math.PI / 2 : -Math.PI / 2), 0);
+        koiDummy.updateMatrix();
+        koiInst.setMatrixAt(k, koiDummy.matrix);
+      }
+      koiInst.instanceMatrix.needsUpdate = true;
+
+      for (let i = 0; i < AI_COUNT; i++) {
+        const ag = aiAgents[i]; let yo = 0;
+        if (ag.behavior === 'walk') {
+          if (ag.wait > 0) ag.wait -= dt;
+          else {
+            const dx = ag.tx - ag.x, dz = ag.tz - ag.z, d = Math.hypot(dx, dz);
+            if (d < 0.65) { ag.wait = 1.5 + Math.random() * 3; ag.tx = (Math.random() - 0.5) * 24; ag.tz = -3 + Math.random() * 22; }
+            else {
+              const c = resolveCollisions(ag.x + (dx / d) * ag.speed * dt, ag.z + (dz / d) * ag.speed * dt, 0.45);
+              ag.x = c.x; ag.z = c.z; ag.rotY = Math.atan2(dx, dz); yo = Math.abs(Math.sin(el * 6 + ag.phase)) * 0.06;
+            }
+          }
+        } else if (ag.behavior === 'chant') { yo = -0.25; ag.rotY = Math.PI; }
+        else if (ag.behavior === 'pray') ag.rotY = Math.PI;
+        aiDummy.rotation.set(0, ag.rotY, 0); aiDummy.scale.setScalar(ag.scale);
+        aiDummy.position.set(ag.x, 0.38 * ag.scale + yo, ag.z); aiDummy.updateMatrix(); aiBodyInst.setMatrixAt(i, aiDummy.matrix);
+        aiDummy.position.set(ag.x, 0.98 * ag.scale + yo, ag.z); aiDummy.updateMatrix(); aiHeadInst.setMatrixAt(i, aiDummy.matrix);
+        aiDummy.position.set(ag.x, 1.0 * ag.scale + yo, ag.z); aiDummy.updateMatrix(); aiHairInst.setMatrixAt(i, aiDummy.matrix);
+      }
+      aiBodyInst.instanceMatrix.needsUpdate = aiHeadInst.instanceMatrix.needsUpdate = aiHairInst.instanceMatrix.needsUpdate = true;
+
+      for (const b of activeBubbles) {
+        b.timer += dt;
+        if (b.timer > 5.2) { b.timer = 0; b.idx = Math.floor(Math.random() * AI_COUNT); b.el.textContent = AI_QUOTES[Math.floor(Math.random() * AI_QUOTES.length)]; }
+        const ag = aiAgents[b.idx];
+        if (b.timer > 0.6 && b.timer < 4.3 && !modalOpen) {
+          proj.set(ag.x, 1.55 * ag.scale, ag.z).project(camera);
+          if (proj.z < 1 && Math.hypot(ag.x - player.x, ag.z - player.z) < 17) {
+            b.el.style.left = ((proj.x * 0.5 + 0.5) * window.innerWidth) + 'px';
+            b.el.style.top = ((-proj.y * 0.5 + 0.5) * window.innerHeight) + 'px';
+            b.el.style.opacity = '1';
+          } else b.el.style.opacity = '0';
+        } else b.el.style.opacity = '0';
+      }
+
+      const sa = smokeP.geo.attributes.position.array;
+      for (let i = 0; i < smokeP.cnt; i++) { sa[i*3+1] += dt * 0.65; if (sa[i*3+1] > 6.8) sa[i*3+1] = 2.15; }
+      smokeP.geo.attributes.position.needsUpdate = true;
+
+      const pa = petalP.geo.attributes.position.array;
+      for (let i = 0; i < petalP.cnt; i++) { pa[i*3+1] -= dt * 0.45; if (pa[i*3+1] < 0.1) pa[i*3+1] = 8.5; }
+      petalP.geo.attributes.position.needsUpdate = true;
+
+      if (rainP.mat.opacity > 0.01) {
+        const ra = rainP.geo.attributes.position.array;
+        for (let i = 0; i < rainP.cnt; i++) { ra[i*3+1] -= dt * 7.8; if (ra[i*3+1] < 0.1) ra[i*3+1] = 14; }
+        rainP.geo.attributes.position.needsUpdate = true;
+      }
+
+      for (const st of activeBurningSticks) {
+        st.burnProgress = Math.min(0.65, st.burnProgress + dt * 0.008);
+        const s = 1 - st.burnProgress; st.stem.scale.y = s; st.stem.position.y = (st.len * s) / 2; st.tip.position.y = st.len * s;
+      }
+      for (const fl of floatingLanterns) {
+        fl.angle += fl.speed * dt * 0.35; fl.mesh.position.x = Math.cos(fl.angle) * fl.radius; fl.mesh.position.z = Math.sin(fl.angle) * fl.radius;
+      }
+      if (bellSwingPhase > 0.005) { bellSwingPhase *= 0.95; bellMesh.rotation.z = Math.sin(el * 14) * bellSwingPhase * 0.16; }
+      if (bellWaveScale > 0) {
+        bellWaveScale += dt * 4.5; bellWaveRing.scale.setScalar(bellWaveScale); bellWaveRing.material.opacity = Math.max(0, 0.85 - bellWaveScale * 0.18);
+        if (bellWaveScale > 5) { bellWaveScale = 0; bellWaveRing.material.opacity = 0; }
+      }
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
